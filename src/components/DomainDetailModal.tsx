@@ -1,30 +1,31 @@
-import React from 'react';
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Domain } from '@/lib/mockData';
-import AIChatbot from './AIChatbot';
-import { 
-  ExternalLink, 
-  CheckCircle2, 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Domain } from "@/lib/mockData";
+import AIChatbot from "./AIChatbot";
+import ImageCarousel from "./ImageCarousel";
+import {
+  ExternalLink,
+  CheckCircle2,
   XCircle,
   Calendar,
   User,
-  Link2
-} from 'lucide-react';
+  Link2,
+} from "lucide-react";
 
 interface DomainDetailModalProps {
   domain: Domain | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onVerify?: (domainId: string, status: 'judol' | 'non-judol') => void;
+  onVerify?: (domainId: string, status: "judol" | "non-judol") => void;
 }
 
 const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
@@ -35,7 +36,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 }) => {
   if (!domain) return null;
 
-  const isJudol = domain.status === 'judol';
+  const isJudol = domain.status === "judol";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,8 +60,8 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 <ExternalLink className="h-3 w-3 shrink-0" />
               </div>
             </div>
-            <Badge className={isJudol ? 'badge-judol' : 'badge-non-judol'}>
-              {isJudol ? 'Judi Online' : 'Non Judi Online'}
+            <Badge className={isJudol ? "badge-judol" : "badge-non-judol"}>
+              {isJudol ? "Judi Online" : "Non Judi Online"}
             </Badge>
           </div>
         </DialogHeader>
@@ -73,18 +74,19 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Confidence Score</span>
-                  <span className={`text-lg font-bold ${
-                    domain.confidenceScore >= 80 
-                      ? isJudol ? 'text-destructive' : 'text-success'
-                      : 'text-warning'
-                  }`}>
+                  <span
+                    className={`text-lg font-bold ${
+                      domain.confidenceScore >= 80
+                        ? isJudol
+                          ? "text-destructive"
+                          : "text-success"
+                        : "text-warning"
+                    }`}
+                  >
                     {domain.confidenceScore}%
                   </span>
                 </div>
-                <Progress 
-                  value={domain.confidenceScore} 
-                  className="h-3"
-                />
+                <Progress value={domain.confidenceScore} className="h-3" />
               </div>
 
               {/* Metadata */}
@@ -93,18 +95,20 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                   <span className="text-xs text-muted-foreground">Crawled</span>
                   <div className="flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {new Date(domain.crawledAt).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
+                    {new Date(domain.crawledAt).toLocaleDateString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
                     })}
                   </div>
                 </div>
                 {domain.verifiedBy && (
                   <div className="space-y-1">
-                    <span className="text-xs text-muted-foreground">Diverifikasi oleh</span>
+                    <span className="text-xs text-muted-foreground">
+                      Diverifikasi oleh
+                    </span>
                     <div className="flex items-center gap-2 text-sm">
                       <User className="h-4 w-4 text-muted-foreground" />
                       {domain.verifiedBy}
@@ -115,7 +119,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
               {/* Keywords */}
               <div className="space-y-3">
-                <span className="text-sm font-medium">Kata Kunci Terdeteksi</span>
+                <span className="text-sm font-medium">
+                  Kata Kunci Terdeteksi
+                </span>
                 <div className="flex flex-wrap gap-2">
                   {domain.keywords.map((keyword, i) => (
                     <Badge key={i} variant="secondary" className="text-xs">
@@ -125,16 +131,15 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 </div>
               </div>
 
-              {/* Screenshot */}
+              {/* Screenshot Carousel */}
               <div className="space-y-3">
                 <span className="text-sm font-medium">Screenshot</span>
-                <div className="rounded-lg overflow-hidden border border-border shadow-sm">
-                  <img
-                    src={domain.screenshot}
-                    alt={`Screenshot of ${domain.domain}`}
-                    className="w-full h-48 object-cover"
-                  />
-                </div>
+                <ImageCarousel
+                  images={domain.screenshots || [domain.screenshot]}
+                  alt={`Screenshot of ${domain.domain}`}
+                  autoPlay={true}
+                  autoPlayInterval={4000}
+                />
               </div>
 
               {/* Extracted Content */}
@@ -155,7 +160,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     <Button
                       variant="outline"
                       className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                      onClick={() => onVerify(domain.id, 'judol')}
+                      onClick={() => onVerify(domain.id, "judol")}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Tandai Judi Online
@@ -163,7 +168,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     <Button
                       variant="outline"
                       className="flex-1 border-success text-success hover:bg-success hover:text-success-foreground"
-                      onClick={() => onVerify(domain.id, 'non-judol')}
+                      onClick={() => onVerify(domain.id, "non-judol")}
                     >
                       <CheckCircle2 className="h-4 w-4 mr-2" />
                       Tandai Non Judi

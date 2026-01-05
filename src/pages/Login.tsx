@@ -147,6 +147,23 @@ const Login: React.FC = () => {
                 )}
               </Button>
             </form>
+
+            {/* Demo credentials hint */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground text-center mb-2">
+                Demo Credentials (Mock Login):
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 bg-muted rounded-lg">
+                  <p className="font-medium">Admin</p>
+                  <p className="text-muted-foreground">admin / admin</p>
+                </div>
+                <div className="p-2 bg-muted rounded-lg">
+                  <p className="font-medium">Verifikator</p>
+                  <p className="text-muted-foreground">ahmad_verifikator</p>
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

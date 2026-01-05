@@ -1,4 +1,5 @@
 import ENDPOINTS from "@/constants/endpoint";
+import { mockUsers } from "@/lib/mockData";
 import type { TokenResponse, LoginInput, BackendUser } from "@/types/authTypes";
 
 export interface AuthResult {
@@ -6,12 +7,63 @@ export interface AuthResult {
   access_token: string;
 }
 
+// Mock users credentials (username = password for demo)
+const MOCK_CREDENTIALS: Record<string, { password: string; isAdmin: boolean }> =
+  {
+    admin: { password: "admin", isAdmin: true },
+    ahmad_verifikator: { password: "ahmad_verifikator", isAdmin: false },
+    budi_verifikator: { password: "budi_verifikator", isAdmin: false },
+    citra_verifikator: { password: "citra_verifikator", isAdmin: false },
+  };
+
 export const authService = {
   /**
-   * Login with username and password
-   * Calls the FastAPI backend OAuth2 password flow
+   * Try mock login first, then fall back to backend
    */
   async login({ username, password }: LoginInput): Promise<AuthResult> {
+    // First, try mock login
+    const mockResult = this.tryMockLogin(username, password);
+    if (mockResult) {
+      console.log("Mock login successful for:", username);
+      return mockResult;
+    }
+
+    // If mock login fails, try backend
+    console.log("Trying backend login for:", username);
+    return this.backendLogin({ username, password });
+  },
+
+  /**
+   * Try to authenticate with mock credentials
+   */
+  tryMockLogin(username: string, password: string): AuthResult | null {
+    const mockCred = MOCK_CREDENTIALS[username];
+
+    if (mockCred && mockCred.password === password) {
+      const mockUser = mockUsers.find((u) => u.username === username);
+
+      const user: BackendUser = {
+        id: mockUser?.id || username,
+        username,
+        email: `${username}@mock.local`,
+        full_name: mockUser?.username || username,
+        is_admin: mockCred.isAdmin,
+        is_active: true,
+      };
+
+      return {
+        user,
+        access_token: `mock_token_${username}_${Date.now()}`,
+      };
+    }
+
+    return null;
+  },
+
+  /**
+   * Login with backend OAuth2 password flow
+   */
+  async backendLogin({ username, password }: LoginInput): Promise<AuthResult> {
     const form = new URLSearchParams();
     form.append("username", username);
     form.append("password", password);
@@ -22,7 +74,7 @@ export const authService = {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      credentials: "include", // Important for cookies
+      credentials: "include",
       body: form.toString(),
     });
 
@@ -30,21 +82,18 @@ export const authService = {
       const errorData = await res
         .json()
         .catch(() => ({ detail: "Login failed" }));
-      console.error("LOGIN ERROR:", errorData);
+      console.error("BACKEND LOGIN ERROR:", errorData);
       throw new Error(errorData.detail || "Invalid username or password");
     }
 
     const token: TokenResponse = await res.json();
 
-    // Since backend doesn't have /me endpoint, we decode user info from token
-    // or construct it from the login response
-    // For now, we'll create a basic user object
     const user: BackendUser = {
       id: username,
       username,
-      email: "", // Not provided by backend
-      full_name: username, // Default to username
-      is_admin: true, // Will be determined by backend in production
+      email: "",
+      full_name: username,
+      is_admin: true,
       is_active: true,
     };
 
@@ -55,7 +104,7 @@ export const authService = {
   },
 
   /**
-   * Logout - clears local state only (no backend endpoint)
+   * Logout - clears local state only
    */
   logout(): void {
     localStorage.removeItem("auth_user");

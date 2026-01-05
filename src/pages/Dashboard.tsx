@@ -1,16 +1,16 @@
-import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import Layout from '@/components/Layout';
-import StatCard from '@/components/StatCard';
-import { 
-  Globe, 
-  AlertTriangle, 
-  CheckCircle, 
+import React from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import Layout from "@/components/Layout";
+import StatCard from "@/components/StatCard";
+import {
+  Globe,
+  AlertTriangle,
+  CheckCircle,
   CalendarCheck,
-  TrendingUp
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+  TrendingUp,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   LineChart,
   Line,
@@ -25,26 +25,33 @@ import {
   ResponsiveContainer,
   Cell,
   Legend,
-} from 'recharts';
-import { 
-  getStatistics, 
-  mockTrendData, 
-  mockVerifikatorStats, 
-  mockDomains 
-} from '@/lib/mockData';
+} from "recharts";
+import {
+  getStatistics,
+  mockTrendData,
+  mockVerifikatorStats,
+  mockDomains,
+} from "@/lib/mockData";
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const stats = getStatistics();
 
   const pieData = [
-    { name: 'Judi Online', value: stats.judolCount, color: 'hsl(0, 84%, 60%)' },
-    { name: 'Non Judi Online', value: stats.nonJudolCount, color: 'hsl(160, 84%, 39%)' },
+    { name: "Judi Online", value: stats.judolCount, color: "hsl(0, 84%, 60%)" },
+    {
+      name: "Non Judi Online",
+      value: stats.nonJudolCount,
+      color: "hsl(160, 84%, 39%)",
+    },
   ];
 
   const recentDomains = mockDomains
-    .filter(d => d.verifiedBy)
-    .sort((a, b) => new Date(b.verifiedAt!).getTime() - new Date(a.verifiedAt!).getTime())
+    .filter((d) => d.verifiedBy)
+    .sort(
+      (a, b) =>
+        new Date(b.verifiedAt!).getTime() - new Date(a.verifiedAt!).getTime()
+    )
     .slice(0, 5);
 
   return (
@@ -57,12 +64,13 @@ const Dashboard: React.FC = () => {
               Dashboard
             </h1>
             <p className="text-muted-foreground mt-1">
-              Selamat datang, {user?.username}! Berikut ringkasan monitoring hari ini.
+              Selamat datang, {user?.username}! Berikut ringkasan monitoring
+              hari ini.
             </p>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <TrendingUp className="h-4 w-4" />
-            Update terakhir: {new Date().toLocaleTimeString('id-ID')}
+            Update terakhir: {new Date().toLocaleTimeString("id-ID")}
           </div>
         </div>
 
@@ -107,21 +115,21 @@ const Dashboard: React.FC = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={mockTrendData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="date" 
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    dataKey="date"
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
                   />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                  />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
                     }}
                   />
                   <Legend />
@@ -131,7 +139,7 @@ const Dashboard: React.FC = () => {
                     name="Judi Online"
                     stroke="hsl(0, 84%, 60%)"
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(0, 84%, 60%)' }}
+                    dot={{ fill: "hsl(0, 84%, 60%)" }}
                   />
                   <Line
                     type="monotone"
@@ -139,7 +147,7 @@ const Dashboard: React.FC = () => {
                     name="Non Judi Online"
                     stroke="hsl(160, 84%, 39%)"
                     strokeWidth={2}
-                    dot={{ fill: 'hsl(160, 84%, 39%)' }}
+                    dot={{ fill: "hsl(160, 84%, 39%)" }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -162,7 +170,9 @@ const Dashboard: React.FC = () => {
                     outerRadius={100}
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    label={({ name, percent }) =>
+                      `${name} (${(percent * 100).toFixed(0)}%)`
+                    }
                     labelLine={false}
                   >
                     {pieData.map((entry, index) => (
@@ -171,9 +181,9 @@ const Dashboard: React.FC = () => {
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
                     }}
                   />
                 </PieChart>
@@ -192,25 +202,32 @@ const Dashboard: React.FC = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={mockVerifikatorStats} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="hsl(var(--border))"
+                  />
+                  <XAxis
+                    type="number"
+                    stroke="hsl(var(--muted-foreground))"
+                    fontSize={12}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
                     stroke="hsl(var(--muted-foreground))"
                     fontSize={12}
                     width={60}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
                     }}
                   />
-                  <Bar 
-                    dataKey="count" 
-                    fill="hsl(var(--primary))" 
+                  <Bar
+                    dataKey="count"
+                    fill="hsl(var(--primary))"
                     radius={[0, 4, 4, 0]}
                     name="Jumlah Verifikasi"
                   />
@@ -229,31 +246,52 @@ const Dashboard: React.FC = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border">
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Domain</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Status</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Score</th>
-                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Verifikator</th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                        Domain
+                      </th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                        Score
+                      </th>
+                      <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                        Verifikator
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentDomains.map((domain) => (
-                      <tr key={domain.id} className="border-b border-border/50 hover:bg-muted/50 transition-colors">
+                      <tr
+                        key={domain.id}
+                        className="border-b border-border/50 hover:bg-muted/50 transition-colors"
+                      >
                         <td className="py-3 px-4">
                           <span className="text-sm font-medium truncate max-w-[200px] block">
                             {domain.domain}
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <Badge className={domain.status === 'judol' ? 'badge-judol' : 'badge-non-judol'}>
-                            {domain.status === 'judol' ? 'Judol' : 'Non Judol'}
+                          <Badge
+                            className={
+                              domain.status === "judol"
+                                ? "badge-judol"
+                                : "badge-non-judol"
+                            }
+                          >
+                            {domain.status === "judol" ? "Judol" : "Non Judol"}
                           </Badge>
                         </td>
                         <td className="py-3 px-4">
-                          <span className={`text-sm font-semibold ${
-                            domain.confidenceScore >= 80 
-                              ? domain.status === 'judol' ? 'text-destructive' : 'text-success'
-                              : 'text-warning'
-                          }`}>
+                          <span
+                            className={`text-sm font-semibold ${
+                              domain.confidenceScore >= 80
+                                ? domain.status === "judol"
+                                  ? "text-destructive"
+                                  : "text-success"
+                                : "text-warning"
+                            }`}
+                          >
                             {domain.confidenceScore}%
                           </span>
                         </td>

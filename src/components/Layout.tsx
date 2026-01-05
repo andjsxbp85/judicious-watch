@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  CheckCircle, 
-  Users, 
-  LogOut, 
-  Menu, 
+import React, { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
+import {
+  LayoutDashboard,
+  CheckCircle,
+  Users,
+  LogOut,
+  Menu,
   X,
   Shield,
-  ChevronRight
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+  ChevronRight,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,14 +25,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-    { icon: CheckCircle, label: 'Verifikasi Domain', path: '/verification' },
-    ...(isAdmin ? [{ icon: Users, label: 'Kelola User', path: '/users' }] : []),
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
+    { icon: CheckCircle, label: "Verifikasi Domain", path: "/verification" },
+    ...(isAdmin ? [{ icon: Users, label: "Kelola User", path: "/users" }] : []),
   ];
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -49,7 +49,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           onClick={() => setSidebarOpen(!sidebarOpen)}
           className="text-sidebar-foreground hover:bg-sidebar-accent"
         >
-          {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {sidebarOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </Button>
       </header>
 
@@ -65,8 +69,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="h-16 flex items-center gap-3 px-6 border-b border-sidebar-border">
           <Shield className="h-8 w-8 text-sidebar-primary" />
           <div>
-            <h1 className="font-bold text-sidebar-foreground text-lg leading-tight">SPJO</h1>
-            <p className="text-xs text-sidebar-foreground/60">Pengawasan Judi Online</p>
+            <h1 className="font-bold text-sidebar-foreground text-lg leading-tight">
+              SPJO
+            </h1>
+            <p className="text-xs text-sidebar-foreground/60">
+              Pengawasan Judi Online
+            </p>
           </div>
         </div>
 
@@ -107,7 +115,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {user?.username}
               </p>
               <p className="text-xs text-sidebar-foreground/60 capitalize">
-                {user?.role}
+                {user?.is_admin ? "Admin" : "User"}
               </p>
             </div>
           </div>
@@ -132,9 +140,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
-        <div className="p-4 md:p-6 lg:p-8">
-          {children}
-        </div>
+        <div className="p-4 md:p-6 lg:p-8">{children}</div>
       </main>
     </div>
   );

@@ -1,43 +1,53 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Shield, Eye, EyeOff, AlertCircle, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
       const success = await login(username, password);
-      
+
       if (success) {
         toast({
-          title: 'Login Berhasil',
-          description: 'Selamat datang di Sistem Pengawasan Judi Online',
+          title: "Login Berhasil",
+          description: "Selamat datang di Sistem Pengawasan Judi Online",
         });
-        navigate('/dashboard');
+        navigate("/dashboard");
       } else {
-        setError('Username atau password salah');
+        setError("Username atau password salah");
       }
     } catch (err) {
-      setError('Terjadi kesalahan. Silakan coba lagi.');
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan. Silakan coba lagi.";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +110,7 @@ const Login: React.FC = () => {
                 <div className="relative">
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Masukkan password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -133,32 +143,15 @@ const Login: React.FC = () => {
                     Memproses...
                   </>
                 ) : (
-                  'Masuk'
+                  "Masuk"
                 )}
               </Button>
             </form>
-
-            {/* Demo credentials hint */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground text-center mb-2">
-                Demo Credentials:
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 bg-muted rounded-lg">
-                  <p className="font-medium">Admin</p>
-                  <p className="text-muted-foreground">admin / admin</p>
-                </div>
-                <div className="p-2 bg-muted rounded-lg">
-                  <p className="font-medium">Verifikator</p>
-                  <p className="text-muted-foreground">ahmad_verifikator / ahmad_verifikator</p>
-                </div>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2026 SPJO. Hak Cipta Dilindungi.
+          © 2026. Hak Cipta Dilindungi.
         </p>
       </div>
     </div>

@@ -1,9 +1,17 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { mockUsers, User } from '@/lib/mockData';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
+import { authService } from "@/lib/authService";
+import type { BackendUser } from "@/types/authTypes";
 
 interface AuthContextType {
-  user: User | null;
+  user: BackendUser | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
   isAdmin: boolean;
@@ -11,45 +19,57 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [user, setUser] = useState<BackendUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Check for existing session on mount
   useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem('auth_user');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        localStorage.removeItem('auth_user');
-      }
+    const storedUser = authService.getStoredUser();
+    if (storedUser && authService.getAccessToken()) {
+      setUser(storedUser);
     }
+    setIsLoading(false);
   }, []);
 
-  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
-    // Mock authentication - in production, this would call an API
-    // For demo purposes, password is same as username
-    const foundUser = mockUsers.find(u => u.username === username);
-    
-    if (foundUser && password === username) {
-      const updatedUser = { ...foundUser, lastLogin: new Date().toISOString() };
-      setUser(updatedUser);
-      localStorage.setItem('auth_user', JSON.stringify(updatedUser));
-      return true;
-    }
-    
-    return false;
-  }, []);
+  const login = useCallback(
+    async (username: string, password: string): Promise<boolean> => {
+      try {
+        const result = await authService.login({ username, password });
+
+        // Store auth data
+        authService.storeAuth(result.user, result.access_token);
+        setUser(result.user);
+
+        return true;
+      } catch (error) {
+        console.error("Login failed:", error);
+        return false;
+      }
+    },
+    []
+  );
 
   const logout = useCallback(() => {
+    authService.logout();
     setUser(null);
-    localStorage.removeItem('auth_user');
   }, []);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.is_admin ?? false;
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, isAdmin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        logout,
+        isAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -58,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };

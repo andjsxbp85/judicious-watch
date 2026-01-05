@@ -4,20 +4,26 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { DomainsProvider } from "@/contexts/DomainsContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Verification from "./pages/Verification";
+import ServiceLog from "./pages/ServiceLog";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Protected Route Component
+// These components must be inside AuthProvider
 const ProtectedRoute: React.FC<{
   children: React.ReactNode;
   adminOnly?: boolean;
 }> = ({ children, adminOnly = false }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated, isAdmin, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -30,9 +36,12 @@ const ProtectedRoute: React.FC<{
   return <>{children}</>;
 };
 
-// Auth Route - redirects to dashboard if already logged in
 const AuthRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -70,6 +79,14 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/service-log"
+        element={
+          <ProtectedRoute>
+            <ServiceLog />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/users"
         element={
           <ProtectedRoute adminOnly>
@@ -89,7 +106,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <DomainsProvider>
+            <AppRoutes />
+          </DomainsProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

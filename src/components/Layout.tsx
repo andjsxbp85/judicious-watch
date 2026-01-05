@@ -10,6 +10,7 @@ import {
   X,
   Shield,
   ChevronRight,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,9 +26,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: CheckCircle, label: "Verifikasi Domain", path: "/verification" },
-    ...(isAdmin ? [{ icon: Users, label: "Kelola User", path: "/users" }] : []),
+    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", id: "nav-dashboard" },
+    { icon: CheckCircle, label: "Verifikasi Domain", path: "/verification", id: "nav-verification" },
+    { icon: Activity, label: "Log Servis", path: "/service-log", id: "nav-service-log" },
+    ...(isAdmin ? [{ icon: Users, label: "Kelola User", path: "/users", id: "nav-users" }] : []),
   ];
 
   const handleLogout = () => {
@@ -79,12 +81,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav id="sidebar-nav" className="flex-1 px-3 py-4 space-y-1">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <button
                 key={item.path}
+                id={item.id}
                 onClick={() => {
                   navigate(item.path);
                   setSidebarOpen(false);

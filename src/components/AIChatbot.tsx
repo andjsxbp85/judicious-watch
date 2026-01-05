@@ -99,34 +99,36 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
   };
 
   const quickQuestions = [
-    'Mengapa website ini diklasifikasikan demikian?',
-    'Kata kunci apa yang terdeteksi?',
-    'Berapa confidence score-nya?',
+    'Apa hukuman bagi pelaku judi online di Indonesia?',
+    'Bagaimana regulasi pemblokiran situs judi online?',
+    'Apa dasar hukum UU ITE terkait judi online?',
   ];
 
   return (
-    <div className="flex flex-col h-full">
+    <div id="ai-chatbot-container" className="flex flex-col h-full">
       {/* Chat Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border">
-        <div className="p-2 rounded-full bg-primary/10">
+      <div id="ai-chatbot-header" className="flex items-center gap-3 p-4 border-b border-border">
+        <div id="ai-chatbot-icon" className="p-2 rounded-full bg-primary/10">
           <Bot className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h3 className="font-semibold text-foreground">AI Assistant</h3>
-          <p className="text-xs text-muted-foreground">Analisis Domain</p>
+          <h3 id="ai-chatbot-title" className="font-semibold text-foreground">AI Assistant</h3>
+          <p id="ai-chatbot-subtitle" className="text-xs text-muted-foreground">Analisis Domain</p>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+      <div id="ai-chatbot-messages" className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
         {messages.map((message) => (
           <div
             key={message.id}
+            id={`chat-message-${message.id}`}
             className={`flex items-start gap-2 animate-slide-up ${
               message.role === 'user' ? 'flex-row-reverse' : ''
             }`}
           >
             <div
+              id={`chat-avatar-${message.id}`}
               className={`p-2 rounded-full shrink-0 ${
                 message.role === 'user'
                   ? 'bg-primary text-primary-foreground'
@@ -140,6 +142,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
               )}
             </div>
             <div
+              id={`chat-bubble-${message.id}`}
               className={
                 message.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-ai'
               }
@@ -154,7 +157,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
         ))}
 
         {isTyping && (
-          <div className="flex items-start gap-2">
+          <div id="ai-typing-indicator" className="flex items-start gap-2">
             <div className="p-2 rounded-full bg-muted shrink-0">
               <Bot className="h-4 w-4" />
             </div>
@@ -172,12 +175,13 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
 
       {/* Quick Questions */}
       {messages.length <= 2 && (
-        <div className="px-4 pb-2">
-          <p className="text-xs text-muted-foreground mb-2">Pertanyaan cepat:</p>
-          <div className="flex flex-wrap gap-2">
+        <div id="quick-questions-container" className="px-4 pb-2">
+          <p id="quick-questions-label" className="text-xs text-muted-foreground mb-2">Pertanyaan cepat:</p>
+          <div id="quick-questions-list" className="flex flex-wrap gap-2">
             {quickQuestions.map((q, i) => (
               <button
                 key={i}
+                id={`quick-question-${i}`}
                 onClick={() => setInput(q)}
                 className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground hover:bg-accent transition-colors"
               >
@@ -189,9 +193,10 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
       )}
 
       {/* Input */}
-      <div className="p-4 border-t border-border">
+      <div id="ai-chatbot-input-container" className="p-4 border-t border-border">
         <div className="flex gap-2">
           <Input
+            id="ai-chatbot-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -200,6 +205,7 @@ const AIChatbot: React.FC<AIChatbotProps> = ({ domain }) => {
             disabled={isTyping}
           />
           <Button
+            id="ai-chatbot-send-btn"
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
             size="icon"

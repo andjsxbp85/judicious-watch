@@ -1,17 +1,24 @@
+export interface UrlEntry {
+  url: string;
+  screenshot: string;
+}
+
 export interface Domain {
   id: string;
   url: string;
   domain: string;
-  status: "judol" | "non-judol";
+  urlGroup: UrlEntry[]; // All URLs under this domain with their screenshots
+  status: "not-verified" | "judol" | "non-judol";
   confidenceScore: number;
   screenshot: string;
-  screenshots?: string[]; // Multiple screenshots for carousel
+  screenshots?: string[]; // Kept for backward compatibility
   extractedContent: string;
   verifiedBy: string | null;
   verifiedAt: string | null;
   crawledAt: string;
   keywords: string[];
   aiReasoning: string;
+  reasoning?: string; // User-provided reasoning for verification
 }
 
 export interface User {
@@ -34,12 +41,18 @@ export interface VerifikatorStats {
   count: number;
 }
 
-// Mock domains data
+// Mock domains data with URL grouping
 export const mockDomains: Domain[] = [
   {
     id: "1",
-    url: "https://slot-gacor-123.com/play",
+    url: "https://slot-gacor-123.com",
     domain: "slot-gacor-123.com",
+    urlGroup: [
+      { url: "https://slot-gacor-123.com", screenshot: "/screenshots/gambling_1.png" },
+      { url: "https://slot-gacor-123.com/play", screenshot: "/screenshots/gambling_2.png" },
+      { url: "https://games.slot-gacor-123.com", screenshot: "/screenshots/gambling_3.png" },
+      { url: "https://berita.slot-gacor-123.com/now", screenshot: "/screenshots/gambling_1.png" },
+    ],
     status: "judol",
     confidenceScore: 95,
     screenshot: "/screenshots/gambling_1.png",
@@ -50,8 +63,8 @@ export const mockDomains: Domain[] = [
     ],
     extractedContent:
       "Selamat datang di Slot Gacor 123! Mainkan ratusan game slot online terpercaya. Bonus new member 100%, deposit minimal 10rb. RTP tertinggi, jackpot hingga miliaran rupiah. Daftar sekarang dan menangkan hadiah besar! Slot pragmatic, PG Soft, Habanero tersedia...",
-    verifiedBy: "Ahmad Verifikator",
-    verifiedAt: "2026-01-05T10:30:00Z",
+    verifiedBy: "admin",
+    verifiedAt: new Date().toISOString(),
     crawledAt: "2026-01-05T08:00:00Z",
     keywords: ["slot online", "judi", "deposit", "jackpot", "RTP", "bonus"],
     aiReasoning:
@@ -59,16 +72,20 @@ export const mockDomains: Domain[] = [
   },
   {
     id: "2",
-    url: "https://berita-teknologi.id/artikel",
+    url: "https://berita-teknologi.id",
     domain: "berita-teknologi.id",
+    urlGroup: [
+      { url: "https://berita-teknologi.id", screenshot: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop" },
+      { url: "https://berita-teknologi.id/artikel", screenshot: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop" },
+    ],
     status: "non-judol",
     confidenceScore: 98,
     screenshot:
       "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop",
     extractedContent:
       "Berita Teknologi Indonesia - Portal berita teknologi terkini. Artikel tentang startup, gadget terbaru, AI, dan transformasi digital Indonesia. Update harian dari dunia teknologi...",
-    verifiedBy: "Budi Verifikator",
-    verifiedAt: "2026-01-05T09:15:00Z",
+    verifiedBy: "admin",
+    verifiedAt: new Date().toISOString(),
     crawledAt: "2026-01-05T07:30:00Z",
     keywords: ["berita", "teknologi", "startup", "gadget"],
     aiReasoning:
@@ -76,12 +93,16 @@ export const mockDomains: Domain[] = [
   },
   {
     id: "3",
-    url: "https://togel-hk-sgp.net/result",
+    url: "https://togel-hk-sgp.net",
     domain: "togel-hk-sgp.net",
-    status: "judol",
+    urlGroup: [
+      { url: "https://togel-hk-sgp.net", screenshot: "/screenshots/gambling_2.png" },
+      { url: "https://togel-hk-sgp.net/result", screenshot: "/screenshots/gambling_3.png" },
+      { url: "https://togel-hk-sgp.net/prediksi", screenshot: "/screenshots/gambling_1.png" },
+    ],
+    status: "not-verified",
     confidenceScore: 92,
-    screenshot:
-      "https://images.unsplash.com/photo-1518133910546-b6c2fb7d79e3?w=800&h=600&fit=crop",
+    screenshot: "/screenshots/gambling_2.png",
     extractedContent:
       "Togel HK SGP Sydney - Hasil keluaran togel terupdate. Prediksi jitu togel hari ini, data pengeluaran HK, SGP, Sydney. Pasang togel online aman dan terpercaya. Diskon terbesar, hadiah 4D x 10.000...",
     verifiedBy: null,
@@ -95,7 +116,11 @@ export const mockDomains: Domain[] = [
     id: "4",
     url: "https://university-indonesia.ac.id",
     domain: "university-indonesia.ac.id",
-    status: "non-judol",
+    urlGroup: [
+      { url: "https://university-indonesia.ac.id", screenshot: "/screenshots/university_1.png" },
+      { url: "https://university-indonesia.ac.id/pendaftaran", screenshot: "/screenshots/university_2.png" },
+    ],
+    status: "not-verified",
     confidenceScore: 99,
     screenshot: "/screenshots/university_1.png",
     screenshots: [
@@ -115,10 +140,14 @@ export const mockDomains: Domain[] = [
     id: "5",
     url: "https://casino-online-vip.xyz",
     domain: "casino-online-vip.xyz",
-    status: "judol",
+    urlGroup: [
+      { url: "https://casino-online-vip.xyz", screenshot: "/screenshots/gambling_1.png" },
+      { url: "https://casino-online-vip.xyz/live", screenshot: "/screenshots/gambling_2.png" },
+      { url: "https://casino-online-vip.xyz/promo", screenshot: "/screenshots/gambling_3.png" },
+    ],
+    status: "not-verified",
     confidenceScore: 97,
-    screenshot:
-      "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800&h=600&fit=crop",
+    screenshot: "/screenshots/gambling_1.png",
     extractedContent:
       "VIP Casino Online - Live Casino terbaik dengan dealer cantik. Baccarat, Roulette, Blackjack, Sic Bo. Bonus cashback harian, turnover mingguan. Deposit via bank lokal dan e-wallet...",
     verifiedBy: "Citra Verifikator",
@@ -132,7 +161,10 @@ export const mockDomains: Domain[] = [
     id: "6",
     url: "https://toko-online-fashion.com",
     domain: "toko-online-fashion.com",
-    status: "non-judol",
+    urlGroup: [
+      { url: "https://toko-online-fashion.com", screenshot: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop" },
+    ],
+    status: "not-verified",
     confidenceScore: 96,
     screenshot:
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
@@ -149,10 +181,13 @@ export const mockDomains: Domain[] = [
     id: "7",
     url: "https://poker-domino-qq.net",
     domain: "poker-domino-qq.net",
-    status: "judol",
+    urlGroup: [
+      { url: "https://poker-domino-qq.net", screenshot: "/screenshots/gambling_3.png" },
+      { url: "https://poker-domino-qq.net/daftar", screenshot: "/screenshots/gambling_1.png" },
+    ],
+    status: "not-verified",
     confidenceScore: 94,
-    screenshot:
-      "https://images.unsplash.com/photo-1541278107931-e006523892df?w=800&h=600&fit=crop",
+    screenshot: "/screenshots/gambling_3.png",
     extractedContent:
       "Poker Domino QQ Online - Agen poker terpercaya sejak 2015. Main poker, domino, ceme, capsa susun. Minimal deposit 25rb, withdraw cepat. Bonus referral seumur hidup...",
     verifiedBy: null,
@@ -166,7 +201,10 @@ export const mockDomains: Domain[] = [
     id: "8",
     url: "https://resep-masakan-indo.com",
     domain: "resep-masakan-indo.com",
-    status: "non-judol",
+    urlGroup: [
+      { url: "https://resep-masakan-indo.com", screenshot: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop" },
+    ],
+    status: "not-verified",
     confidenceScore: 99,
     screenshot:
       "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop",
@@ -183,10 +221,14 @@ export const mockDomains: Domain[] = [
     id: "9",
     url: "https://sportbook-888.co",
     domain: "sportbook-888.co",
-    status: "judol",
+    urlGroup: [
+      { url: "https://sportbook-888.co", screenshot: "/screenshots/gambling_2.png" },
+      { url: "https://sportbook-888.co/bola", screenshot: "/screenshots/gambling_1.png" },
+      { url: "https://sportbook-888.co/live", screenshot: "/screenshots/gambling_3.png" },
+    ],
+    status: "not-verified",
     confidenceScore: 91,
-    screenshot:
-      "https://images.unsplash.com/photo-1461896836934- voices-28100c?w=800&h=600&fit=crop",
+    screenshot: "/screenshots/gambling_2.png",
     extractedContent:
       "Sportsbook 888 - Taruhan olahraga online. Bola, basket, tenis, e-sports. Odds terbaik, live betting, parlay mix. Bonus deposit 100% untuk member baru...",
     verifiedBy: "Citra Verifikator",
@@ -200,7 +242,10 @@ export const mockDomains: Domain[] = [
     id: "10",
     url: "https://kesehatan-keluarga.id",
     domain: "kesehatan-keluarga.id",
-    status: "non-judol",
+    urlGroup: [
+      { url: "https://kesehatan-keluarga.id", screenshot: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop" },
+    ],
+    status: "not-verified",
     confidenceScore: 98,
     screenshot:
       "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop",
@@ -269,23 +314,34 @@ export const mockVerifikatorStats: VerifikatorStats[] = [
   { name: "Eko", count: 45 },
 ];
 
-// Statistics
-export const getStatistics = () => {
-  const totalUrls = mockDomains.length;
-  const judolCount = mockDomains.filter((d) => d.status === "judol").length;
-  const nonJudolCount = mockDomains.filter(
-    (d) => d.status === "non-judol"
-  ).length;
-  const todayVerified = mockDomains.filter((d) => {
+// Statistics - calculated from actual mockDomains data
+export const getStatistics = (domains: Domain[] = mockDomains) => {
+  // Total domains (unique main domains)
+  const totalDomains = domains.length;
+  
+  // Total URLs (sum of all URLs in urlGroup for each domain)
+  const totalUrls = domains.reduce((sum, d) => {
+    return sum + (d.urlGroup?.length || 1);
+  }, 0);
+  
+  // Count by status
+  const judolCount = domains.filter((d) => d.status === "judol").length;
+  const nonJudolCount = domains.filter((d) => d.status === "non-judol").length;
+  const notVerifiedCount = domains.filter((d) => d.status === "not-verified").length;
+  
+  // Today's verifications
+  const todayVerified = domains.filter((d) => {
     if (!d.verifiedAt) return false;
     const today = new Date().toDateString();
     return new Date(d.verifiedAt).toDateString() === today;
   }).length;
 
   return {
-    totalUrls: 1247,
-    judolCount: 523,
-    nonJudolCount: 724,
-    todayVerified: 47,
+    totalDomains,
+    totalUrls,
+    judolCount,
+    nonJudolCount,
+    notVerifiedCount,
+    todayVerified,
   };
 };

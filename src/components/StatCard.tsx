@@ -11,6 +11,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   variant?: 'default' | 'primary' | 'success' | 'danger' | 'warning';
+  id?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -19,6 +20,7 @@ const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   trend,
   variant = 'default',
+  id,
 }) => {
   const variantStyles = {
     default: 'from-primary/10 to-primary/5',
@@ -36,16 +38,20 @@ const StatCard: React.FC<StatCardProps> = ({
     warning: 'bg-warning/15 text-warning',
   };
 
+  // Generate id from title if not provided
+  const cardId = id || title.toLowerCase().replace(/\s+/g, '-');
+
   return (
-    <div className="stat-card group">
+    <div id={`stat-card-${cardId}`} className="stat-card group">
       <div className={cn("stat-card-gradient bg-gradient-to-br", variantStyles[variant])} />
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
-          <div className={cn("p-3 rounded-xl", iconStyles[variant])}>
+          <div id={`stat-icon-${cardId}`} className={cn("p-3 rounded-xl", iconStyles[variant])}>
             <Icon className="h-6 w-6" />
           </div>
           {trend && (
             <span
+              id={`stat-trend-${cardId}`}
               className={cn(
                 "text-xs font-medium px-2 py-1 rounded-full",
                 trend.isPositive
@@ -58,8 +64,8 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         <div>
-          <p className="text-sm text-muted-foreground mb-1">{title}</p>
-          <p className="text-3xl font-bold text-foreground tracking-tight">
+          <p id={`stat-title-${cardId}`} className="text-sm text-muted-foreground mb-1">{title}</p>
+          <p id={`stat-value-${cardId}`} className="text-3xl font-bold text-foreground tracking-tight">
             {typeof value === 'number' ? value.toLocaleString('id-ID') : value}
           </p>
         </div>

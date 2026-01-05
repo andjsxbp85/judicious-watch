@@ -137,62 +137,62 @@ const UserManagement: React.FC = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div id="user-management-page" className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div id="user-management-header" className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground">
+            <h1 id="user-management-title" className="text-2xl lg:text-3xl font-bold text-foreground">
               Kelola User
             </h1>
-            <p className="text-muted-foreground mt-1">
+            <p id="user-management-subtitle" className="text-muted-foreground mt-1">
               Tambah, edit, dan hapus user sistem
             </p>
           </div>
-          <Button onClick={handleOpenAdd}>
+          <Button id="add-user-btn" onClick={handleOpenAdd}>
             <Plus className="h-4 w-4 mr-2" />
             Tambah User
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
+        <div id="user-stats-container" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card id="stat-card-total-user">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-primary/10">
+                <div id="stat-icon-total-user" className="p-3 rounded-xl bg-primary/10">
                   <UserIcon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Total User</p>
-                  <p className="text-2xl font-bold">{users.length}</p>
+                  <p id="stat-label-total-user" className="text-sm text-muted-foreground">Total User</p>
+                  <p id="stat-value-total-user" className="text-2xl font-bold">{users.length}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card id="stat-card-admin">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-destructive/10">
+                <div id="stat-icon-admin" className="p-3 rounded-xl bg-destructive/10">
                   <Shield className="h-6 w-6 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Admin</p>
-                  <p className="text-2xl font-bold">
+                  <p id="stat-label-admin" className="text-sm text-muted-foreground">Admin</p>
+                  <p id="stat-value-admin" className="text-2xl font-bold">
                     {users.filter(u => u.role === 'admin').length}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
-          <Card>
+          <Card id="stat-card-verifikator">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-success/10">
+                <div id="stat-icon-verifikator" className="p-3 rounded-xl bg-success/10">
                   <CheckCircle className="h-6 w-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Verifikator</p>
-                  <p className="text-2xl font-bold">
+                  <p id="stat-label-verifikator" className="text-sm text-muted-foreground">Verifikator</p>
+                  <p id="stat-value-verifikator" className="text-2xl font-bold">
                     {users.filter(u => u.role === 'verifikator').length}
                   </p>
                 </div>
@@ -202,29 +202,29 @@ const UserManagement: React.FC = () => {
         </div>
 
         {/* Users Table */}
-        <Card>
+        <Card id="users-table-card">
           <CardHeader>
-            <CardTitle className="text-lg">Daftar User</CardTitle>
+            <CardTitle id="users-table-title" className="text-lg">Daftar User</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <Table>
+              <Table id="users-table">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead>Username</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead className="hidden md:table-cell">Dibuat</TableHead>
-                    <TableHead className="hidden md:table-cell">Login Terakhir</TableHead>
-                    <TableHead className="hidden lg:table-cell">Verifikasi</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                    <TableHead id="th-username">Username</TableHead>
+                    <TableHead id="th-role">Role</TableHead>
+                    <TableHead id="th-created-at" className="hidden md:table-cell">Dibuat</TableHead>
+                    <TableHead id="th-last-login" className="hidden md:table-cell">Login Terakhir</TableHead>
+                    <TableHead id="th-verifications" className="hidden lg:table-cell">Verifikasi</TableHead>
+                    <TableHead id="th-actions" className="text-right">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody id="users-table-body">
                   {users.map((user) => (
-                    <TableRow key={user.id} className="hover:bg-muted/30">
-                      <TableCell>
+                    <TableRow key={user.id} id={`user-row-${user.id}`} className="hover:bg-muted/30">
+                      <TableCell id={`user-username-${user.id}`}>
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                          <div id={`user-avatar-${user.id}`} className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
                             <span className="text-sm font-semibold text-primary">
                               {user.username.charAt(0).toUpperCase()}
                             </span>
@@ -232,7 +232,7 @@ const UserManagement: React.FC = () => {
                           <span className="font-medium">{user.username}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell id={`user-role-${user.id}`}>
                         <Badge
                           variant={user.role === 'admin' ? 'default' : 'secondary'}
                           className="capitalize"
@@ -240,20 +240,21 @@ const UserManagement: React.FC = () => {
                           {user.role}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell id={`user-created-${user.id}`} className="hidden md:table-cell text-muted-foreground">
                         {new Date(user.createdAt).toLocaleDateString('id-ID')}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell id={`user-last-login-${user.id}`} className="hidden md:table-cell text-muted-foreground">
                         {user.lastLogin
                           ? new Date(user.lastLogin).toLocaleDateString('id-ID')
                           : '-'}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell id={`user-verifications-${user.id}`} className="hidden lg:table-cell">
                         <span className="font-semibold">{user.verificationsCount}</span>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell id={`user-actions-${user.id}`} className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
+                            id={`edit-user-btn-${user.id}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenEdit(user)}
@@ -261,6 +262,7 @@ const UserManagement: React.FC = () => {
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
+                            id={`delete-user-btn-${user.id}`}
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenDelete(user)}
@@ -282,13 +284,13 @@ const UserManagement: React.FC = () => {
 
       {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent id="user-form-dialog">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle id="user-form-dialog-title">
               {editingUser ? 'Edit User' : 'Tambah User Baru'}
             </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form id="user-form" onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
@@ -320,20 +322,20 @@ const UserManagement: React.FC = () => {
                   setFormData(prev => ({ ...prev, role: value }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id="role-select">
                   <SelectValue placeholder="Pilih role" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="verifikator">Verifikator</SelectItem>
+                <SelectContent id="role-select-content">
+                  <SelectItem id="role-option-admin" value="admin">Admin</SelectItem>
+                  <SelectItem id="role-option-verifikator" value="verifikator">Verifikator</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+            <DialogFooter id="user-form-footer">
+              <Button id="cancel-user-form-btn" type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Batal
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button id="submit-user-form-btn" type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -352,19 +354,19 @@ const UserManagement: React.FC = () => {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent id="delete-user-dialog">
           <DialogHeader>
-            <DialogTitle>Hapus User</DialogTitle>
+            <DialogTitle id="delete-user-dialog-title">Hapus User</DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground">
+          <p id="delete-user-message" className="text-muted-foreground">
             Apakah Anda yakin ingin menghapus user <strong>{deletingUser?.username}</strong>?
             Tindakan ini tidak dapat dibatalkan.
           </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+          <DialogFooter id="delete-user-dialog-footer">
+            <Button id="cancel-delete-user-btn" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Batal
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={isLoading}>
+            <Button id="confirm-delete-user-btn" variant="destructive" onClick={handleDelete} disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

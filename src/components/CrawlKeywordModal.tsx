@@ -8,6 +8,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -45,6 +52,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [editValue, setEditValue] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [searchEngine, setSearchEngine] = useState('cse-google');
   const { toast } = useToast();
 
   const handleEdit = (keyword: Keyword) => {
@@ -126,12 +134,34 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
 
         <div id="crawl-keyword-actions" className="flex-shrink-0 mb-4">
           {!isAdding ? (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2 items-center">
               <Button id="add-keyword-btn" onClick={() => setIsAdding(true)} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Keyword
               </Button>
-              <Button id="start-crawl-btn" variant="default" className="w-full sm:w-auto">
+              <Select value={searchEngine} onValueChange={setSearchEngine}>
+                <SelectTrigger id="search-engine-select" className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Pilih Search Engine" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem id="search-engine-cse-google" value="cse-google">CSE Google</SelectItem>
+                  <SelectItem id="search-engine-baidu" value="baidu">Baidu</SelectItem>
+                  <SelectItem id="search-engine-bing" value="bing">Bing</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button 
+                id="start-crawl-btn" 
+                variant="default" 
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  toast({
+                    title: 'Memulai Crawl',
+                    description: `Crawling dengan search engine: ${searchEngine === 'cse-google' ? 'CSE Google' : searchEngine === 'baidu' ? 'Baidu' : 'Bing'}`,
+                  });
+                  // TODO: Implement actual crawl request with searchEngine value
+                  console.log('Start crawl with:', { searchEngine, keywords });
+                }}
+              >
                 Start Crawl
               </Button>
             </div>

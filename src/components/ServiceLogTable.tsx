@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -202,34 +203,19 @@ export const ServiceLogTable: React.FC<ServiceLogTableProps> = ({
                 <label id="detail-log-label" className="text-sm font-medium text-muted-foreground">
                   Detail Log
                 </label>
-                <p id="detail-log-value" className="font-medium mt-1">{selectedLog.detailLog}</p>
+                <Textarea
+                  id="detail-log-value"
+                  readOnly
+                  className="mt-1 min-h-[200px] font-mono text-xs bg-muted"
+                  value={[
+                    `[Log Message]`,
+                    selectedLog.detailLog,
+                    '',
+                    selectedLog.requestPayload ? `[Request Payload]\n${JSON.stringify(JSON.parse(selectedLog.requestPayload), null, 2)}` : '',
+                    selectedLog.responsePayload ? `[Response Payload]\n${JSON.stringify(JSON.parse(selectedLog.responsePayload), null, 2)}` : '',
+                  ].filter(Boolean).join('\n\n')}
+                />
               </div>
-              {selectedLog.requestPayload && (
-                <div>
-                  <label id="detail-request-payload-label" className="text-sm font-medium text-muted-foreground">
-                    Request Payload
-                  </label>
-                  <pre 
-                    id="detail-request-payload-value" 
-                    className="mt-1 p-3 bg-muted rounded-md text-xs overflow-x-auto"
-                  >
-                    {JSON.stringify(JSON.parse(selectedLog.requestPayload), null, 2)}
-                  </pre>
-                </div>
-              )}
-              {selectedLog.responsePayload && (
-                <div>
-                  <label id="detail-response-payload-label" className="text-sm font-medium text-muted-foreground">
-                    Response Payload
-                  </label>
-                  <pre 
-                    id="detail-response-payload-value" 
-                    className="mt-1 p-3 bg-muted rounded-md text-xs overflow-x-auto"
-                  >
-                    {JSON.stringify(JSON.parse(selectedLog.responsePayload), null, 2)}
-                  </pre>
-                </div>
-              )}
             </div>
           )}
         </DialogContent>

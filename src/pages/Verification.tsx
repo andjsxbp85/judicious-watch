@@ -32,6 +32,12 @@ import {
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   Search, 
   Filter, 
@@ -44,7 +50,9 @@ import {
   ExternalLink,
   Globe,
   X,
-  Check
+  Check,
+  MoreHorizontal,
+  Sparkles
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -100,6 +108,9 @@ const Verification: React.FC = () => {
   const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100]);
   const [reasoningFilter, setReasoningFilter] = useState<string>('all');
   const [selectedVerifikators, setSelectedVerifikators] = useState<string[]>([]);
+
+  // Selected rows for bulk action
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // Get unique verifikators for search
   const uniqueVerifikators = useMemo(() => {
@@ -278,6 +289,35 @@ const Verification: React.FC = () => {
         verifiedAt: status === 'not-verified' ? null : new Date().toISOString()
       } : null);
     }
+  };
+
+  // Toggle row selection
+  const toggleRowSelection = (domainId: string) => {
+    setSelectedRows(prev => 
+      prev.includes(domainId) 
+        ? prev.filter(id => id !== domainId)
+        : [...prev, domainId]
+    );
+  };
+
+  // Handle bulk AI reasoning
+  const handleBulkAIReasoning = () => {
+    if (selectedRows.length === 0) {
+      toast({
+        title: "Tidak ada domain yang dipilih",
+        description: "Pilih setidaknya satu domain untuk melakukan bulk action.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    toast({
+      title: "AI Reasoning dimulai",
+      description: `Memproses ${selectedRows.length} domain yang dipilih...`,
+    });
+    
+    // TODO: Implement actual AI reasoning logic
+    console.log("Selected domains for AI reasoning:", selectedRows);
   };
 
   return (
@@ -504,7 +544,29 @@ const Verification: React.FC = () => {
             <div className="flex items-center justify-between">
               <CardTitle id="domain-count-title" className="text-lg">
                 Daftar Domain ({filteredDomains.length})
+                {selectedRows.length > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {selectedRows.length} dipilih
+                  </Badge>
+                )}
               </CardTitle>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button id="bulk-action-button" variant="outline" size="sm">
+                    <MoreHorizontal className="h-4 w-4 mr-2" />
+                    Bulk Action
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent id="bulk-action-dropdown" align="end">
+                  <DropdownMenuItem
+                    id="bulk-action-ai-reasoning"
+                    onClick={handleBulkAIReasoning}
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Lakukan AI Reasoning
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -512,6 +574,9 @@ const Verification: React.FC = () => {
               <Table id="domain-table">
                 <TableHeader>
                   <TableRow className="bg-muted/50">
+                    <TableHead id="table-header-checkbox" className="w-[50px]">
+                      {/* Empty header for checkbox column */}
+                    </TableHead>
                     <TableHead 
                       id="table-header-domain"
                       className="w-[300px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
@@ -561,8 +626,15 @@ const Verification: React.FC = () => {
                     <TableRow 
                       key={domain.id}
                       id={`domain-row-${domain.id}`}
-                      className="hover:bg-muted/30 transition-colors"
+                      className={`hover:bg-muted/30 transition-colors ${selectedRows.includes(domain.id) ? 'bg-muted/50' : ''}`}
                     >
+                      <TableCell>
+                        <Checkbox
+                          id={`domain-checkbox-${domain.id}`}
+                          checked={selectedRows.includes(domain.id)}
+                          onCheckedChange={() => toggleRowSelection(domain.id)}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
                           <span id={`domain-name-${domain.id}`} className="font-medium truncate max-w-[280px]">
@@ -646,7 +718,7 @@ const Verification: React.FC = () => {
                   ))}
                   {paginatedDomains.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
                         Tidak ada domain yang ditemukan
                       </TableCell>
                     </TableRow>

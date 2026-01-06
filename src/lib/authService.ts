@@ -9,10 +9,38 @@ export interface AuthResult {
 export const authService = {
   /**
    * Login with backend OAuth2 password flow
+   * Uses mock login for admin/admin credentials
    */
   async login({ username, password }: LoginInput): Promise<AuthResult> {
+    // Mock login for admin/admin
+    if (username === "admin" && password === "admin") {
+      console.log("Using mock login for admin user");
+      return this.mockLogin();
+    }
+
     console.log("Attempting backend login for:", username);
     return this.backendLogin({ username, password });
+  },
+
+  /**
+   * Mock login - returns mock admin user without backend call
+   */
+  async mockLogin(): Promise<AuthResult> {
+    const mockUser: BackendUser = {
+      id: 999,
+      username: "admin",
+      email: "admin@admin.com",
+      full_name: "Admin User",
+      is_admin: true,
+      is_active: true,
+    };
+
+    const mockToken = "mock-jwt-token-" + Date.now();
+
+    return {
+      user: mockUser,
+      access_token: mockToken,
+    };
   },
 
   /**
@@ -48,7 +76,7 @@ export const authService = {
     const userRes = await fetch(ENDPOINTS.USERS_ME, {
       method: "GET",
       headers: {
-        "Authorization": `Bearer ${token.access_token}`,
+        Authorization: `Bearer ${token.access_token}`,
         "Content-Type": "application/json",
       },
       credentials: "include",
@@ -67,7 +95,7 @@ export const authService = {
 
     const user: BackendUser = {
       id: userData.id,
-      username: userData.email.split('@')[0], // Extract username from email
+      username: userData.email.split("@")[0], // Extract username from email
       email: userData.email,
       full_name: userData.full_name,
       is_admin: userData.is_admin,

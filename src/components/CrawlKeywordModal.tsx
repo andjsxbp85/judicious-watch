@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -149,9 +150,13 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                   <SelectItem id="search-engine-bing" value="bing">Bing</SelectItem>
                 </SelectContent>
               </Select>
-              <Button 
-                id="start-crawl-btn" 
-                variant="default" 
+              <Checkbox
+                id={`auto-reason-checkbox`}
+              />
+              AI Reasoning
+              <Button
+                id="start-crawl-btn"
+                variant="default"
                 className="w-full sm:w-auto"
                 onClick={() => {
                   toast({

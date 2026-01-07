@@ -27,7 +27,7 @@ export const authService = {
    */
   async mockLogin(): Promise<AuthResult> {
     const mockUser: BackendUser = {
-      id: 999,
+      id: "999",
       username: "admin",
       email: "admin@admin.com",
       full_name: "Admin User",

@@ -1,5 +1,5 @@
-export type ServiceStatus = 'ok' | 'error' | 'unknown';
-export type LogStatus = 'ok' | 'error' | 'warning';
+export type ServiceStatus = "ok" | "error" | "unknown";
+export type LogStatus = "ok" | "error" | "warning";
 
 export interface Service {
   id: string;
@@ -15,7 +15,7 @@ export interface ServiceLog {
   serviceName: string;
   status: LogStatus;
   detailLog: string;
-  requestType: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'HEALTH_CHECK';
+  requestType: "GET" | "POST" | "PUT" | "DELETE" | "HEALTH_CHECK";
   responseCode: number | null;
   timestamp: string;
   duration: number | null;
@@ -25,35 +25,35 @@ export interface ServiceLog {
 
 export const SERVICES: Service[] = [
   {
-    id: 'crawler',
-    name: 'Crawler',
-    status: 'unknown',
+    id: "crawler",
+    name: "Crawler",
+    status: "unknown",
     lastChecked: null,
     responseTime: null,
-    endpoint: '/api/crawler/health',
+    endpoint: "/api/crawler/health",
   },
   {
-    id: 'reasoning-ai',
-    name: 'Reasoning AI',
-    status: 'unknown',
+    id: "reasoning-ai",
+    name: "Reasoning AI",
+    status: "unknown",
     lastChecked: null,
     responseTime: null,
-    endpoint: '/api/reasoning/health',
+    endpoint: "/api/reasoning/health",
   },
   {
-    id: 'sft-hukum',
-    name: 'SFT Hukum',
-    status: 'unknown',
+    id: "sft-hukum",
+    name: "SFT Hukum",
+    status: "unknown",
     lastChecked: null,
     responseTime: null,
-    endpoint: '/api/sft-hukum/health',
+    endpoint: "/api/sft-hukum/health",
   },
   {
-    id: 'computer-vision',
-    name: 'Computer Vision',
-    status: 'unknown',
+    id: "computer-vision",
+    name: "Computer Vision",
+    status: "unknown",
     lastChecked: null,
     responseTime: null,
-    endpoint: '/api/cv/health',
+    endpoint: "/api/cv/health",
   },
 ];

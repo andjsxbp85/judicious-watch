@@ -5,7 +5,7 @@ import React, {
   useCallback,
   useEffect,
 } from "react";
-import { authService } from "@/lib/authService";
+import { authService } from "@/services/authService";
 import type { BackendUser } from "@/types/authTypes";
 
 interface AuthContextType {

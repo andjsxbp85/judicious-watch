@@ -1,4 +1,4 @@
-import { authService } from "@/lib/authService";
+import { authService } from "@/services/authService";
 
 /**
  * API client for making authenticated requests

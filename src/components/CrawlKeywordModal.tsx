@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, X, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { scrapeService, CrawlEngine } from "@/lib/scrapeService";
+import { scrapeService, CrawlEngine } from "@/services/scrapeService";
 
 interface Keyword {
   id: string;

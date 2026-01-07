@@ -54,7 +54,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { domainService } from "@/lib/domainService";
+import { domainService } from "@/services/domainService";
 import type { FrontendDomain } from "@/types/domainTypes";
 import type { GetDomainsParams, SortBy, SortOrder } from "@/types/domainTypes";
 

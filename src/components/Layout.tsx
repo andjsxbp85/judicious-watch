@@ -26,10 +26,27 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", id: "nav-dashboard" },
-    { icon: CheckCircle, label: "Verifikasi Domain", path: "/verification", id: "nav-verification" },
-    { icon: Activity, label: "Log Servis", path: "/service-log", id: "nav-service-log" },
-    ...(isAdmin ? [{ icon: Users, label: "Kelola User", path: "/users", id: "nav-users" }] : []),
+    {
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      path: "/dashboard",
+      id: "nav-dashboard",
+    },
+    {
+      icon: CheckCircle,
+      label: "Verifikasi Domain",
+      path: "/verification",
+      id: "nav-verification",
+    },
+    {
+      icon: Activity,
+      label: "Log Servis",
+      path: "/service-log",
+      id: "nav-service-log",
+    },
+    ...(isAdmin
+      ? [{ icon: Users, label: "Kelola User", path: "/users", id: "nav-users" }]
+      : []),
   ];
 
   const handleLogout = () => {
@@ -42,8 +59,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-sidebar h-16 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
-          <Shield className="h-8 w-8 text-sidebar-primary" />
-          <span className="font-bold text-sidebar-foreground">SPJO</span>
+          {/* Logo di header mobile tetap pakai teks */}
+          <span className="font-bold text-sidebar-foreground">PRD</span>
         </div>
         <Button
           variant="ghost"
@@ -59,23 +76,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Button>
       </header>
 
-      {/* Sidebar */}
+      {/* Sidebar dengan background image */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen w-64 bg-sidebar transition-transform duration-300 ease-in-out",
-          "lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed top-0 left-0 z-40 h-screen w-64 transition-transform duration-300 ease-in-out",
+          "bg-sidebar",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
+          "lg:translate-x-0"
         )}
+        style={{
+          // backgroundImage: "url(/sidebar.png)",
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+        }}
       >
-        {/* Logo */}
+        {/* Logo diganti dengan gambar logo */}
         <div className="h-16 flex items-center gap-3 px-6 border-b border-sidebar-border">
-          <Shield className="h-8 w-8 text-sidebar-primary" />
+          <img src="/logo.webp" alt="Logo" className="h-10 w-10" />
           <div>
             <h1 className="font-bold text-sidebar-foreground text-lg leading-tight">
-              SPJO
+              PRD
             </h1>
             <p className="text-xs text-sidebar-foreground/60">
-              Pengawasan Judi Online
+              Pengawasan Ruang Digital
             </p>
           </div>
         </div>

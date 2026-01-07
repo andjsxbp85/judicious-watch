@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -22,9 +22,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Plus, Pencil, Trash2, X, Check } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/table";
+import { Plus, Pencil, Trash2, X, Check, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { scrapeService, CrawlEngine } from "@/lib/scrapeService";
 
 interface Keyword {
   id: string;
@@ -36,24 +37,18 @@ interface CrawlKeywordModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const initialKeywords: Keyword[] = [
-  { id: '1', keyword: 'slot online' },
-  { id: '2', keyword: 'judi bola' },
-  { id: '3', keyword: 'poker online' },
-  { id: '4', keyword: 'togel online' },
-  { id: '5', keyword: 'casino online' },
-];
-
 const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   open,
   onOpenChange,
 }) => {
-  const [keywords, setKeywords] = useState<Keyword[]>(initialKeywords);
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState('');
-  const [newKeyword, setNewKeyword] = useState('');
+  const [editValue, setEditValue] = useState("");
+  const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [searchEngine, setSearchEngine] = useState('cse-google');
+  const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
+  const [aiReasoning, setAiReasoning] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   const handleEdit = (keyword: Keyword) => {
@@ -64,70 +59,132 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const handleSaveEdit = () => {
     if (!editValue.trim()) {
       toast({
-        title: 'Error',
-        description: 'Keyword tidak boleh kosong',
-        variant: 'destructive',
+        title: "Error",
+        description: "Keyword tidak boleh kosong",
+        variant: "destructive",
       });
       return;
     }
 
-    setKeywords(prev =>
-      prev.map(k =>
+    setKeywords((prev) =>
+      prev.map((k) =>
         k.id === editingId ? { ...k, keyword: editValue.trim() } : k
       )
     );
     setEditingId(null);
-    setEditValue('');
+    setEditValue("");
     toast({
-      title: 'Berhasil',
-      description: 'Keyword berhasil diubah',
+      title: "Berhasil",
+      description: "Keyword berhasil diubah",
     });
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
-    setEditValue('');
+    setEditValue("");
   };
 
   const handleDelete = (id: string) => {
-    setKeywords(prev => prev.filter(k => k.id !== id));
+    setKeywords((prev) => prev.filter((k) => k.id !== id));
     toast({
-      title: 'Berhasil',
-      description: 'Keyword berhasil dihapus',
+      title: "Berhasil",
+      description: "Keyword berhasil dihapus",
     });
   };
 
   const handleAddKeyword = () => {
     if (!newKeyword.trim()) {
       toast({
-        title: 'Error',
-        description: 'Keyword tidak boleh kosong',
-        variant: 'destructive',
+        title: "Error",
+        description: "Keyword tidak boleh kosong",
+        variant: "destructive",
       });
       return;
     }
 
-    const newId = (Math.max(...keywords.map(k => parseInt(k.id)), 0) + 1).toString();
-    setKeywords(prev => [...prev, { id: newId, keyword: newKeyword.trim() }]);
-    setNewKeyword('');
+    const newId = (
+      Math.max(...keywords.map((k) => parseInt(k.id)), 0) + 1
+    ).toString();
+    setKeywords((prev) => [...prev, { id: newId, keyword: newKeyword.trim() }]);
+    setNewKeyword("");
     setIsAdding(false);
     toast({
-      title: 'Berhasil',
-      description: 'Keyword baru berhasil ditambahkan',
+      title: "Berhasil",
+      description: "Keyword baru berhasil ditambahkan",
     });
   };
 
   const handleCancelAdd = () => {
-    setNewKeyword('');
+    setNewKeyword("");
     setIsAdding(false);
+  };
+
+  const handleStartCrawl = async () => {
+    if (keywords.length === 0) {
+      toast({
+        title: "Error",
+        description: "Tambahkan minimal satu keyword sebelum memulai crawl",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const keywordStrings = keywords.map((k) => k.keyword);
+
+      const result = await scrapeService.scrapeMultiKeyword({
+        keywords: keywordStrings,
+        crawl_engine: searchEngine,
+        ai_reasoning: aiReasoning,
+      });
+
+      console.log("Crawl result:", result);
+
+      toast({
+        title: "Crawl Berhasil",
+        description: `Berhasil melakukan crawl ${keywords.length} keyword dengan ${searchEngine}`,
+      });
+
+      // Close modal after successful crawl
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Crawl error:", error);
+      toast({
+        title: "Crawl Gagal",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat melakukan crawl",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const getEngineLabel = (engine: CrawlEngine): string => {
+    const labels: Record<CrawlEngine, string> = {
+      google: "Google",
+      baidu: "Baidu",
+      bing: "Bing",
+    };
+    return labels[engine];
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent id="crawl-keyword-modal" className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent
+        id="crawl-keyword-modal"
+        className="max-w-2xl max-h-[80vh] flex flex-col"
+      >
         <DialogHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
-            <DialogTitle id="crawl-keyword-modal-title" className="text-xl font-bold">
+            <DialogTitle
+              id="crawl-keyword-modal-title"
+              className="text-xl font-bold"
+            >
               Crawl New URL - Kelola Keyword
             </DialogTitle>
           </div>
@@ -136,38 +193,69 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
         <div id="crawl-keyword-actions" className="flex-shrink-0 mb-4">
           {!isAdding ? (
             <div className="flex flex-wrap gap-2 items-center">
-              <Button id="add-keyword-btn" onClick={() => setIsAdding(true)} className="w-full sm:w-auto">
+              <Button
+                id="add-keyword-btn"
+                onClick={() => setIsAdding(true)}
+                className="w-full sm:w-auto"
+                disabled={isLoading}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Keyword
               </Button>
-              <Select value={searchEngine} onValueChange={setSearchEngine}>
-                <SelectTrigger id="search-engine-select" className="w-full sm:w-[180px]">
+              <Select
+                value={searchEngine}
+                onValueChange={(value) => setSearchEngine(value as CrawlEngine)}
+                disabled={isLoading}
+              >
+                <SelectTrigger
+                  id="search-engine-select"
+                  className="w-full sm:w-[180px]"
+                >
                   <SelectValue placeholder="Pilih Search Engine" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem id="search-engine-cse-google" value="cse-google">CSE Google</SelectItem>
-                  <SelectItem id="search-engine-baidu" value="baidu">Baidu</SelectItem>
-                  <SelectItem id="search-engine-bing" value="bing">Bing</SelectItem>
+                  <SelectItem id="search-engine-google" value="google">
+                    Google
+                  </SelectItem>
+                  <SelectItem id="search-engine-baidu" value="baidu">
+                    Baidu
+                  </SelectItem>
+                  <SelectItem id="search-engine-bing" value="bing">
+                    Bing
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              <Checkbox
-                id={`auto-reason-checkbox`}
-              />
-              AI Reasoning
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="ai-reasoning-checkbox"
+                  checked={aiReasoning}
+                  onCheckedChange={(checked) =>
+                    setAiReasoning(checked === true)
+                  }
+                  disabled={isLoading}
+                />
+                <label
+                  htmlFor="ai-reasoning-checkbox"
+                  className="text-sm cursor-pointer"
+                >
+                  AI Reasoning
+                </label>
+              </div>
               <Button
                 id="start-crawl-btn"
                 variant="default"
                 className="w-full sm:w-auto"
-                onClick={() => {
-                  toast({
-                    title: 'Memulai Crawl',
-                    description: `Crawling dengan search engine: ${searchEngine === 'cse-google' ? 'CSE Google' : searchEngine === 'baidu' ? 'Baidu' : 'Bing'}`,
-                  });
-                  // TODO: Implement actual crawl request with searchEngine value
-                  console.log('Start crawl with:', { searchEngine, keywords });
-                }}
+                onClick={handleStartCrawl}
+                disabled={isLoading || keywords.length === 0}
               >
-                Start Crawl
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Crawling...
+                  </>
+                ) : (
+                  "Start Crawl"
+                )}
               </Button>
             </div>
           ) : (
@@ -178,34 +266,57 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddKeyword();
-                  if (e.key === 'Escape') handleCancelAdd();
+                  if (e.key === "Enter") handleAddKeyword();
+                  if (e.key === "Escape") handleCancelAdd();
                 }}
                 autoFocus
               />
-              <Button id="confirm-add-keyword-btn" size="icon" onClick={handleAddKeyword}>
+              <Button
+                id="confirm-add-keyword-btn"
+                size="icon"
+                onClick={handleAddKeyword}
+              >
                 <Check className="h-4 w-4" />
               </Button>
-              <Button id="cancel-add-keyword-btn" size="icon" variant="outline" onClick={handleCancelAdd}>
+              <Button
+                id="cancel-add-keyword-btn"
+                size="icon"
+                variant="outline"
+                onClick={handleCancelAdd}
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           )}
         </div>
 
-        <div id="keyword-table-container" className="flex-1 overflow-y-auto border rounded-lg">
+        <div
+          id="keyword-table-container"
+          className="flex-1 overflow-y-auto border rounded-lg"
+        >
           <Table id="keyword-table">
             <TableHeader className="sticky top-0 bg-muted">
               <TableRow>
-                <TableHead id="th-keyword-no" className="w-16 text-center">No</TableHead>
+                <TableHead id="th-keyword-no" className="w-16 text-center">
+                  No
+                </TableHead>
                 <TableHead id="th-keyword">Keyword</TableHead>
-                <TableHead id="th-keyword-action" className="w-32 text-center">Action</TableHead>
+                <TableHead id="th-keyword-action" className="w-32 text-center">
+                  Action
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody id="keyword-table-body">
               {keywords.map((keyword, index) => (
-                <TableRow key={keyword.id} id={`keyword-row-${keyword.id}`} className="hover:bg-muted/30">
-                  <TableCell id={`keyword-no-${keyword.id}`} className="text-center font-medium">
+                <TableRow
+                  key={keyword.id}
+                  id={`keyword-row-${keyword.id}`}
+                  className="hover:bg-muted/30"
+                >
+                  <TableCell
+                    id={`keyword-no-${keyword.id}`}
+                    className="text-center font-medium"
+                  >
                     {index + 1}
                   </TableCell>
                   <TableCell id={`keyword-value-${keyword.id}`}>
@@ -215,8 +326,8 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') handleSaveEdit();
-                          if (e.key === 'Escape') handleCancelEdit();
+                          if (e.key === "Enter") handleSaveEdit();
+                          if (e.key === "Escape") handleCancelEdit();
                         }}
                         autoFocus
                       />
@@ -255,6 +366,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                             variant="ghost"
                             onClick={() => handleEdit(keyword)}
                             className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            disabled={isLoading}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -264,6 +376,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                             variant="ghost"
                             onClick={() => handleDelete(keyword.id)}
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            disabled={isLoading}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -275,7 +388,11 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
               ))}
               {keywords.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} id="keyword-empty-message" className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={3}
+                    id="keyword-empty-message"
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     Belum ada keyword. Klik "Add New Keyword" untuk menambahkan.
                   </TableCell>
                 </TableRow>

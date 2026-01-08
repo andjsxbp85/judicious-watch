@@ -9,6 +9,9 @@ import type {
   CrawlHistoryItem,
   FrontendCrawlItem,
   FrontendDomainDetail,
+  DomainStatus,
+  UpdateDomainStatusRequest,
+  UpdateDomainStatusResponse,
 } from "@/types/domainTypes";
 
 // Re-export types for consumers
@@ -25,6 +28,8 @@ export type {
   DomainDetailResponse,
   FrontendCrawlItem,
   FrontendDomainDetail,
+  UpdateDomainStatusRequest,
+  UpdateDomainStatusResponse,
 } from "@/types/domainTypes";
 
 // ============================================
@@ -32,9 +37,9 @@ export type {
 // ============================================
 
 /**
- * Map API domain status to frontend status format
+ * Map API domain status to frontend status format (for crawl items)
  */
-function mapStatus(status: DomainItem["status"]): FrontendDomain["status"] {
+function mapCrawlStatus(status: DomainStatus): FrontendCrawlItem["status"] {
   switch (status) {
     case "judol":
       return "judol";
@@ -47,55 +52,121 @@ function mapStatus(status: DomainItem["status"]): FrontendDomain["status"] {
 }
 
 /**
+ * Convert base64 screenshot to data URL format
+ * Handles both raw base64 and already-formatted data URLs
+ * Returns 404 placeholder if screenshot is not valid base64 format
+ */
+function formatScreenshot(screenshot: string | null): string {
+  if (!screenshot || screenshot.trim() === "") {
+    return "/screenshots/placeholder.png";
+  }
+
+  // Already a data URL - valid
+  if (screenshot.startsWith("data:image")) {
+    return screenshot;
+  }
+
+  // Check for valid base64 image headers
+  // JPEG starts with /9j/, PNG starts with iVBOR, GIF starts with R0lGO, WebP starts with UklGR
+  const isValidBase64 =
+    screenshot.startsWith("/9j/") ||
+    screenshot.startsWith("iVBOR") ||
+    screenshot.startsWith("R0lGO") ||
+    screenshot.startsWith("UklGR");
+
+  if (!isValidBase64) {
+    // Not a valid base64 image - return 404 placeholder
+    return "/screenshots/404-not-found.svg";
+  }
+
+  // Detect image type from base64 header
+  let mimeType = "image/png"; // default
+  if (screenshot.startsWith("/9j/")) {
+    mimeType = "image/jpeg";
+  } else if (screenshot.startsWith("R0lGO")) {
+    mimeType = "image/gif";
+  } else if (screenshot.startsWith("UklGR")) {
+    mimeType = "image/webp";
+  }
+
+  return `data:${mimeType};base64,${screenshot}`;
+}
+
+/**
  * Map API crawl history item to frontend format
  */
 function mapCrawlToFrontend(item: CrawlHistoryItem): FrontendCrawlItem {
-  const screenshot =
-    item.screenshot && item.screenshot.trim() !== ""
-      ? item.screenshot.startsWith("data:image")
-        ? item.screenshot
-        : `data:image/png;base64,${item.screenshot}`
-      : "/screenshots/placeholder.png";
-
   return {
     crawl_id: item.crawl_id,
     url: item.url,
     timestamp: item.timestamp,
-    status: mapStatus(item.status),
+    status: mapCrawlStatus(item.status),
     confidenceScore: item.confidence_score,
     reasoning: item.reasoning || "",
     innerText: item.inner_text,
-    screenshot,
+    screenshot: formatScreenshot(item.screenshot),
     isAmp: item.is_amp,
   };
 }
 
 /**
+ * Map a single status value from API format to frontend format
+ */
+function mapSingleStatus(status: DomainStatus): FrontendDomain["status"] {
+  switch (status) {
+    case "judol":
+      return "judol";
+    case "non_judol":
+      return "non-judol";
+    case "not_verified":
+    default:
+      return "not-verified";
+  }
+}
+
+/**
  * Map API domain item to frontend domain format
+ * Handles new array-based structure for url, status, confidenceScore, screenshot, verifiedBy
  */
 export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
-  const screenshot =
-    item.screenshot && item.screenshot.trim() !== ""
-      ? item.screenshot.startsWith("data:image")
-        ? item.screenshot
-        : `data:image/png;base64,${item.screenshot}`
-      : "/screenshots/placeholder.png";
-
-  // Extract first URL from array, or empty string if array is empty/undefined
+  // Get first values for primary display
   const url = Array.isArray(item.url) && item.url.length > 0 ? item.url[0] : "";
+  const firstStatus =
+    Array.isArray(item.status) && item.status.length > 0
+      ? item.status[0]
+      : ("not_verified" as DomainStatus);
+  const firstScore =
+    Array.isArray(item.confidenceScore) && item.confidenceScore.length > 0
+      ? item.confidenceScore[0]
+      : 0;
+  const firstScreenshot =
+    Array.isArray(item.screenshot) && item.screenshot.length > 0
+      ? item.screenshot[0]
+      : null;
+  const firstVerifiedBy =
+    Array.isArray(item.verifiedBy) && item.verifiedBy.length > 0
+      ? item.verifiedBy[0]
+      : null;
+
+  // Map all statuses to frontend format
+  const statuses = Array.isArray(item.status)
+    ? item.status.map(mapSingleStatus)
+    : ["not-verified" as const];
 
   return {
     id: item.id,
-    domain_id: parseInt(item.id) || 0,
     domain: item.domain,
     url,
-    status: mapStatus(item.status),
-    confidenceScore: item.confidenceScore,
-    screenshot,
-    reasoning: item.reasoning,
-    verifiedBy: item.verifiedBy,
-    timestamp_latest: item.timestamp_latest,
-    crawl_id: item.crawl_id,
+    urls: item.url || [],
+    status: mapSingleStatus(firstStatus),
+    statuses,
+    confidenceScore: firstScore,
+    confidenceScores: item.confidenceScore || [],
+    screenshot: formatScreenshot(firstScreenshot),
+    screenshots: item.screenshot || [],
+    verifiedBy: firstVerifiedBy,
+    verifiedBys: item.verifiedBy || [],
+    urlCount: item.url?.length || 0,
   };
 }
 
@@ -201,5 +272,22 @@ export const domainService = {
       domainName: response.domain_name,
       crawls: response.crawls.map(mapCrawlToFrontend),
     };
+  },
+
+  /**
+   * Update domain status
+   * @param domainId - The domain ID to update
+   * @param status - The new status (judol, non_judol, not_verified)
+   * @returns Promise with update response
+   */
+  async updateDomainStatus(
+    domainId: string,
+    status: DomainStatus
+  ): Promise<UpdateDomainStatusResponse> {
+    const body: UpdateDomainStatusRequest = { status };
+    return apiClient(ENDPOINTS.UPDATE_DOMAIN_STATUS(domainId), {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
   },
 };

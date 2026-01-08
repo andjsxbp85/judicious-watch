@@ -84,6 +84,14 @@ const getStatusLabel = (status: DomainStatus) => {
   }
 };
 
+/**
+ * Truncate URL to specified length with ellipsis
+ */
+const truncateUrl = (url: string, maxLength: number = 25): string => {
+  if (url.length <= maxLength) return url;
+  return url.substring(0, maxLength) + "...";
+};
+
 const Verification: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -272,8 +280,6 @@ const Verification: React.FC = () => {
           ? {
               ...d,
               status,
-              reasoning: reasoning ?? d.reasoning,
-              verifiedBy: status === "not-verified" ? null : verifierName,
             }
           : d
       )
@@ -286,8 +292,6 @@ const Verification: React.FC = () => {
           ? {
               ...prev,
               status,
-              reasoning: reasoning ?? prev.reasoning,
-              verifiedBy: status === "not-verified" ? null : verifierName,
             }
           : null
       );
@@ -618,7 +622,7 @@ const Verification: React.FC = () => {
                     </TableHead>
                     <TableHead
                       id="table-header-screenshot"
-                      className="w-[150px] hidden md:table-cell"
+                      className="w-[120px] hidden md:table-cell"
                     >
                       Screenshot
                     </TableHead>
@@ -626,7 +630,7 @@ const Verification: React.FC = () => {
                       id="table-header-verifikator"
                       className="w-[120px] hidden lg:table-cell"
                     >
-                      <div className="flex items-center">Verifikator</div>
+                      Verifikator
                     </TableHead>
                     <TableHead
                       id="table-header-aksi"
@@ -705,9 +709,10 @@ const Verification: React.FC = () => {
                                 href={domain.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-muted-foreground hover:text-primary flex items-start gap-1 break-all"
+                                className="text-xs text-muted-foreground hover:text-primary flex items-start gap-1"
+                                title={domain.url}
                               >
-                                <span className="break-all">{domain.url}</span>
+                                <span>{truncateUrl(domain.url, 25)}</span>
                                 <ExternalLink className="h-3 w-3 shrink-0 mt-0.5" />
                               </a>
                             )}

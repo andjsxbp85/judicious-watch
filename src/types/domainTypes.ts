@@ -21,18 +21,15 @@ export interface GetDomainsParams {
   order?: SortOrder;
 }
 
-// Single domain item from API response
+// Single domain item from API response (new structure with arrays)
 export interface DomainItem {
   id: string;
   domain: string;
   url: string[];
-  status: DomainStatus;
-  confidenceScore: number;
-  reasoning: string;
-  screenshot: string | null;
-  verifiedBy: string | null;
-  timestamp_latest: string | null;
-  crawl_id: string | null;
+  status: DomainStatus[];
+  confidenceScore: number[];
+  screenshot: (string | null)[];
+  verifiedBy: (string | null)[];
 }
 
 // API Response for GET /api/data/domains
@@ -44,19 +41,34 @@ export interface GetDomainsResponse {
   data: DomainItem[];
 }
 
+// Request body for PATCH /api/data/domains/{domain_id}/status
+export interface UpdateDomainStatusRequest {
+  status: DomainStatus;
+}
+
+// API Response for PATCH /api/data/domains/{domain_id}/status
+export interface UpdateDomainStatusResponse {
+  success: boolean;
+  message: string;
+  updated_count: number;
+}
+
 // Frontend Domain type (mapped from API response)
+// For display in Verification table, we show first URL with its status/score
 export interface FrontendDomain {
   id: string;
-  domain_id: number;
   domain: string;
-  url: string;
-  status: "not-verified" | "judol" | "non-judol";
-  confidenceScore: number;
-  screenshot: string;
-  reasoning: string;
-  verifiedBy: string | null;
-  timestamp_latest: string | null;
-  crawl_id: string | null;
+  url: string; // First URL for display
+  urls: string[]; // All URLs
+  status: "not-verified" | "judol" | "non-judol"; // First status for display
+  statuses: ("not-verified" | "judol" | "non-judol")[]; // All statuses
+  confidenceScore: number; // First score for display
+  confidenceScores: number[]; // All scores
+  screenshot: string; // First screenshot for display
+  screenshots: (string | null)[]; // All screenshots
+  verifiedBy: string | null; // First verifier for display
+  verifiedBys: (string | null)[]; // All verifiers
+  urlCount: number; // Number of URLs under this domain
 }
 
 // ============================================

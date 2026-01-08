@@ -24,6 +24,8 @@ const ENDPOINTS = {
   GET_DOMAINS: `${APP_BASE_URL_API}/api/data/domains`,
   GET_DOMAIN_DETAIL: (domainId: string) =>
     `${APP_BASE_URL_API}/api/data/domains/${domainId}`,
+  UPDATE_DOMAIN_STATUS: (domainId: string) =>
+    `${APP_BASE_URL_API}/api/data/domains/${domainId}/status`,
 } as const;
 
 export default ENDPOINTS;

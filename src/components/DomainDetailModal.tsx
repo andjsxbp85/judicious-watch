@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
   ChevronDown,
   Save,
   Loader2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { domainService } from "@/services/domainService";
@@ -63,6 +65,14 @@ const getStatusBadgeClass = (status: DomainStatus) => {
     default:
       return "bg-muted text-muted-foreground";
   }
+};
+
+/**
+ * Truncate URL to specified length with ellipsis
+ */
+const truncateUrl = (url: string, maxLength: number = 25): string => {
+  if (url.length <= maxLength) return url;
+  return url.substring(0, maxLength) + "...";
 };
 
 const getStatusLabel = (status: DomainStatus) => {
@@ -136,11 +146,34 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   const screenshots =
     domainDetail?.crawls.map((crawl) => crawl.screenshot) || [];
 
-  const handleStatusChange = (newStatus: DomainStatus) => {
-    if (newStatus !== currentStatus) {
-      setCurrentStatus(newStatus);
-      setHasChanges(true);
+  // State for API update loading
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Convert frontend status to API status format
+  const toApiStatus = (
+    status: DomainStatus
+  ): "judol" | "non_judol" | "not_verified" => {
+    switch (status) {
+      case "judol":
+        return "judol";
+      case "non-judol":
+        return "non_judol";
+      default:
+        return "not_verified";
     }
+  };
+
+  // Handle status change from dropdown - only update local state
+  const handleStatusChange = (newStatus: DomainStatus) => {
+    if (newStatus === currentStatus) return;
+
+    setCurrentStatus(newStatus);
+    // Mark as having changes so Save button becomes enabled
+    const originalStatus = currentCrawl?.status || "not-verified";
+    setHasChanges(
+      newStatus !== originalStatus ||
+        reasoning !== (currentCrawl?.reasoning || "")
+    );
   };
 
   const handleReasoningChange = (value: string) => {
@@ -152,11 +185,33 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
     );
   };
 
-  const handleSave = () => {
-    if (onVerify && domainId) {
-      onVerify(domainId, currentStatus, reasoning);
-      setHasChanges(false);
-      toast.success("Perubahan berhasil disimpan");
+  const handleSave = async () => {
+    if (!domainId) return;
+
+    setIsUpdating(true);
+    try {
+      const apiStatus = toApiStatus(currentStatus);
+      const response = await domainService.updateDomainStatus(
+        domainId,
+        apiStatus
+      );
+
+      if (response.success) {
+        setHasChanges(false);
+        toast.success(response.message || "Status berhasil disimpan");
+
+        // Call onVerify callback if provided
+        if (onVerify) {
+          onVerify(domainId, currentStatus, reasoning);
+        }
+      } else {
+        toast.error("Gagal menyimpan status");
+      }
+    } catch (error) {
+      console.error("Error saving status:", error);
+      toast.error("Terjadi kesalahan saat menyimpan status");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -219,9 +274,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         id="domain-detail-modal"
-        className="max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden"
+        className="max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden flex flex-col"
       >
-        <DialogHeader className="p-6 pb-4 border-b border-border">
+        <DialogHeader className="p-6 pb-4 pr-12 border-b border-border">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
@@ -231,6 +286,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 >
                   {domainDetail.domainName}
                 </DialogTitle>
+                {/* Save button moved to footer
                 {hasChanges && (
                   <Button
                     id="save-changes-button"
@@ -242,6 +298,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     Save
                   </Button>
                 )}
+                */}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Link2 className="h-4 w-4 shrink-0" />
@@ -255,7 +312,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                       className="h-auto p-0 border-0 bg-transparent text-muted-foreground hover:text-primary focus:ring-0 focus:ring-offset-0 w-auto max-w-[400px]"
                     >
                       <SelectValue>
-                        <span className="truncate">{currentCrawl.url}</span>
+                        <span className="truncate">
+                          {truncateUrl(currentCrawl.url, 25)}
+                        </span>
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="max-w-[500px]">
@@ -279,8 +338,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate hover:text-primary transition-colors"
+                    title={currentCrawl.url}
                   >
-                    {currentCrawl.url}
+                    {truncateUrl(currentCrawl.url, 25)}
                   </a>
                 )}
                 <a
@@ -356,7 +416,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
         <div
           id="domain-detail-content"
-          className="flex flex-col lg:flex-row flex-1 overflow-hidden"
+          className="flex flex-col lg:flex-row flex-1 overflow-hidden min-h-0"
         >
           {/* Left Panel - Domain Info */}
           <div
@@ -509,6 +569,38 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
             />
           </div>
         </div>
+
+        {/* Footer with action buttons */}
+        <DialogFooter className="p-4 border-t border-border bg-background flex-shrink-0">
+          <div className="flex items-center justify-end gap-3 w-full">
+            <Button
+              id="modal-close-button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              <X className="h-4 w-4 mr-2" />
+              Tutup
+            </Button>
+            <Button
+              id="modal-save-button"
+              onClick={handleSave}
+              disabled={isUpdating || !hasChanges}
+              className="gap-2"
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

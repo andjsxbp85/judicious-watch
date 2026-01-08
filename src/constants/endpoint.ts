@@ -31,6 +31,11 @@ const ENDPOINTS = {
     `${APP_BASE_URL_API}/api/data/domains/${domainId}`,
   UPDATE_DOMAIN_STATUS: (domainId: string) =>
     `${APP_BASE_URL_API}/api/data/domains/${domainId}/status`,
+
+  // ============================================
+  // INFERENCE
+  // ============================================
+  SEND_TO_LLM: `${APP_BASE_URL_API}/api/inference/to-llm`,
 } as const;
 
 export default ENDPOINTS;

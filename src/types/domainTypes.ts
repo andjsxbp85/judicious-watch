@@ -115,3 +115,30 @@ export interface FrontendDomainDetail {
   domainName: string;
   crawls: FrontendCrawlItem[];
 }
+
+// ============================================
+// LLM INFERENCE API TYPES
+// ============================================
+
+// LLM inference result structure
+export interface LLMInferenceResult {
+  label: string; // e.g., "judi" or "non-judi"
+  reasoning: string;
+  confidence: number; // 0-100
+}
+
+// Received data in the LLM response
+export interface LLMReceivedData {
+  success: boolean;
+  message: string;
+  domain: string;
+  inference_id: string;
+  result: LLMInferenceResult;
+}
+
+// API Response for POST /api/inference/to-llm
+export interface SendToLLMResponse {
+  success: boolean;
+  message: string;
+  received_data: LLMReceivedData;
+}

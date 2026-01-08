@@ -309,8 +309,11 @@ const Verification: React.FC = () => {
     );
   };
 
+  // LLM processing state
+  const [isProcessingLLM, setIsProcessingLLM] = useState(false);
+
   // Handle bulk AI reasoning
-  const handleBulkAIReasoning = () => {
+  const handleBulkAIReasoning = async () => {
     if (selectedRows.length === 0) {
       toast({
         title: "Tidak ada domain yang dipilih",
@@ -321,13 +324,60 @@ const Verification: React.FC = () => {
       return;
     }
 
+    // Get domain names from selected IDs
+    const selectedDomainNames = domains
+      .filter((d) => selectedRows.includes(d.id))
+      .map((d) => d.domain);
+
+    if (selectedDomainNames.length === 0) {
+      toast({
+        title: "Domain tidak ditemukan",
+        description: "Tidak dapat menemukan domain yang dipilih.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessingLLM(true);
+
     toast({
       title: "AI Reasoning dimulai",
-      description: `Memproses ${selectedRows.length} domain yang dipilih...`,
+      description: `Memproses ${selectedDomainNames.length} domain yang dipilih...`,
     });
 
-    // TODO: Implement actual AI reasoning logic
-    console.log("Selected domains for AI reasoning:", selectedRows);
+    try {
+      const results = await domainService.sendBulkToLLM(
+        selectedDomainNames,
+        (current, total, domain) => {
+          // Optional: Show progress toast for each domain
+          console.log(`Processing ${current}/${total}: ${domain}`);
+        }
+      );
+
+      // Count successes and failures
+      const successCount = results.filter((r) => r.result !== null).length;
+      const failureCount = results.filter((r) => r.error !== null).length;
+
+      toast({
+        title: "AI Reasoning selesai",
+        description: `Berhasil: ${successCount}, Gagal: ${failureCount} dari ${results.length} domain`,
+        variant: failureCount > 0 ? "destructive" : "default",
+      });
+
+      // Clear selection and refresh data
+      setSelectedRows([]);
+      fetchDomains();
+    } catch (err) {
+      console.error("Bulk AI reasoning failed:", err);
+      toast({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Gagal melakukan AI reasoning",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingLLM(false);
+    }
   };
 
   return (
@@ -572,15 +622,25 @@ const Verification: React.FC = () => {
               </CardTitle>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button id="bulk-action-button" variant="outline" size="sm">
-                    <MoreHorizontal className="h-4 w-4 mr-2" />
-                    Bulk Action
+                  <Button
+                    id="bulk-action-button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isProcessingLLM}
+                  >
+                    {isProcessingLLM ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <MoreHorizontal className="h-4 w-4 mr-2" />
+                    )}
+                    {isProcessingLLM ? "Memproses..." : "Bulk Action"}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent id="bulk-action-dropdown" align="end">
                   <DropdownMenuItem
                     id="bulk-action-ai-reasoning"
                     onClick={handleBulkAIReasoning}
+                    disabled={isProcessingLLM}
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
                     Lakukan AI Reasoning

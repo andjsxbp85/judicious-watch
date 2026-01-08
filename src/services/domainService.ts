@@ -12,6 +12,7 @@ import type {
   DomainStatus,
   UpdateDomainStatusRequest,
   UpdateDomainStatusResponse,
+  SendToLLMResponse,
 } from "@/types/domainTypes";
 
 // Re-export types for consumers
@@ -30,6 +31,7 @@ export type {
   FrontendDomainDetail,
   UpdateDomainStatusRequest,
   UpdateDomainStatusResponse,
+  SendToLLMResponse,
 } from "@/types/domainTypes";
 
 // ============================================
@@ -289,5 +291,51 @@ export const domainService = {
       method: "PATCH",
       body: JSON.stringify(body),
     });
+  },
+
+  /**
+   * Send a domain to LLM for AI reasoning/inference
+   * @param domain - The domain name to process
+   * @returns Promise with LLM inference response
+   */
+  async sendToLLM(domain: string): Promise<SendToLLMResponse> {
+    return apiClient(ENDPOINTS.SEND_TO_LLM, {
+      method: "POST",
+      body: JSON.stringify({ domain }),
+    });
+  },
+
+  /**
+   * Send multiple domains to LLM for AI reasoning/inference (sequential processing)
+   * @param domains - Array of domain names to process
+   * @param onProgress - Optional callback for progress updates
+   * @returns Promise with array of results
+   */
+  async sendBulkToLLM(
+    domains: string[],
+    onProgress?: (current: number, total: number, domain: string) => void
+  ): Promise<
+    { domain: string; result: SendToLLMResponse | null; error: string | null }[]
+  > {
+    const results: {
+      domain: string;
+      result: SendToLLMResponse | null;
+      error: string | null;
+    }[] = [];
+
+    for (let i = 0; i < domains.length; i++) {
+      const domain = domains[i];
+      onProgress?.(i + 1, domains.length, domain);
+
+      try {
+        const result = await this.sendToLLM(domain);
+        results.push({ domain, result, error: null });
+      } catch (err) {
+        const error = err instanceof Error ? err.message : "Unknown error";
+        results.push({ domain, result: null, error });
+      }
+    }
+
+    return results;
   },
 };

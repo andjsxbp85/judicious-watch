@@ -88,7 +88,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
     setEditValue(keyword.keyword);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editValue.trim()) {
       toast({
         title: "Error",
@@ -98,17 +98,33 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
       return;
     }
 
-    setKeywords((prev) =>
-      prev.map((k) =>
-        k.id === editingId ? { ...k, keyword: editValue.trim() } : k
-      )
-    );
-    setEditingId(null);
-    setEditValue("");
-    toast({
-      title: "Berhasil",
-      description: "Keyword berhasil diubah",
-    });
+    if (!editingId) return;
+
+    try {
+      const updatedKeyword = await scrapeService.updateKeyword(editingId, {
+        keyword: editValue.trim(),
+      });
+
+      setKeywords((prev) =>
+        prev.map((k) => (k.id === editingId ? updatedKeyword : k))
+      );
+      setEditingId(null);
+      setEditValue("");
+      toast({
+        title: "Berhasil",
+        description: "Keyword berhasil diubah",
+      });
+    } catch (error) {
+      console.error("Failed to update keyword:", error);
+      toast({
+        title: "Gagal mengubah keyword",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tidak dapat mengubah keyword",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancelEdit = () => {
@@ -116,15 +132,28 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
     setEditValue("");
   };
 
-  const handleDelete = (id: string) => {
-    setKeywords((prev) => prev.filter((k) => k.id !== id));
-    toast({
-      title: "Berhasil",
-      description: "Keyword berhasil dihapus",
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      await scrapeService.deleteKeyword(id);
+      setKeywords((prev) => prev.filter((k) => k.id !== id));
+      toast({
+        title: "Berhasil",
+        description: "Keyword berhasil dihapus",
+      });
+    } catch (error) {
+      console.error("Failed to delete keyword:", error);
+      toast({
+        title: "Gagal menghapus keyword",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tidak dapat menghapus keyword",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleAddKeyword = () => {
+  const handleAddKeyword = async () => {
     if (!newKeyword.trim()) {
       toast({
         title: "Error",
@@ -134,16 +163,29 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
       return;
     }
 
-    const newId = (
-      Math.max(...keywords.map((k) => parseInt(k.id)), 0) + 1
-    ).toString();
-    setKeywords((prev) => [...prev, { id: newId, keyword: newKeyword.trim() }]);
-    setNewKeyword("");
-    setIsAdding(false);
-    toast({
-      title: "Berhasil",
-      description: "Keyword baru berhasil ditambahkan",
-    });
+    try {
+      const createdKeyword = await scrapeService.createKeyword({
+        keyword: newKeyword.trim(),
+      });
+
+      setKeywords((prev) => [...prev, createdKeyword]);
+      setNewKeyword("");
+      setIsAdding(false);
+      toast({
+        title: "Berhasil",
+        description: "Keyword baru berhasil ditambahkan",
+      });
+    } catch (error) {
+      console.error("Failed to create keyword:", error);
+      toast({
+        title: "Gagal menambahkan keyword",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tidak dapat menambahkan keyword",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancelAdd = () => {

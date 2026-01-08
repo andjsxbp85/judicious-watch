@@ -4,6 +4,11 @@ import type {
   ScrapeMultiKeywordRequest,
   ScrapeMultiKeywordResponse,
   GetKeywordsResponse,
+  CreateKeywordRequest,
+  CreateKeywordResponse,
+  UpdateKeywordRequest,
+  UpdateKeywordResponse,
+  DeleteKeywordResponse,
 } from "@/types/scrapeTypes";
 
 // Re-export types for consumers
@@ -13,6 +18,11 @@ export type {
   ScrapeMultiKeywordResponse,
   KeywordItem,
   GetKeywordsResponse,
+  CreateKeywordRequest,
+  CreateKeywordResponse,
+  UpdateKeywordRequest,
+  UpdateKeywordResponse,
+  DeleteKeywordResponse,
   ValidationErrorDetail,
   ValidationError,
 } from "@/types/scrapeTypes";
@@ -43,6 +53,47 @@ export const scrapeService = {
   async getKeywords(): Promise<GetKeywordsResponse> {
     return apiClient(ENDPOINTS.GET_KEYWORDS, {
       method: "GET",
+    });
+  },
+
+  /**
+   * Create a new keyword
+   * @param request - The keyword to create
+   * @returns Promise with the created keyword
+   */
+  async createKeyword(
+    request: CreateKeywordRequest
+  ): Promise<CreateKeywordResponse> {
+    return apiClient(ENDPOINTS.CREATE_KEYWORD, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  },
+
+  /**
+   * Update an existing keyword
+   * @param keywordId - The ID of the keyword to update
+   * @param request - The updated keyword data
+   * @returns Promise with the updated keyword
+   */
+  async updateKeyword(
+    keywordId: string,
+    request: UpdateKeywordRequest
+  ): Promise<UpdateKeywordResponse> {
+    return apiClient(ENDPOINTS.UPDATE_KEYWORD(keywordId), {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  },
+
+  /**
+   * Delete a keyword
+   * @param keywordId - The ID of the keyword to delete
+   * @returns Promise with the deletion confirmation
+   */
+  async deleteKeyword(keywordId: string): Promise<DeleteKeywordResponse> {
+    return apiClient(ENDPOINTS.DELETE_KEYWORD(keywordId), {
+      method: "DELETE",
     });
   },
 };

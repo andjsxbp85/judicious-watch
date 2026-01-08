@@ -14,7 +14,7 @@ class UserService {
   }
 
   async getAllUsers(): Promise<User[]> {
-    const response = await fetch(`${APP_BASE_URL_API}/api/users`, {
+    const response = await fetch(`${APP_BASE_URL_API}/api/users/`, {
       headers: this.getAuthHeader(),
     });
 
@@ -38,7 +38,7 @@ class UserService {
   }
 
   async createUser(user: UserCreateInput): Promise<User> {
-    const response = await fetch(`${APP_BASE_URL_API}/api/users`, {
+    const response = await fetch(`${APP_BASE_URL_API}/api/users/`, {
       method: "POST",
       headers: this.getAuthHeader(),
       body: JSON.stringify(user),

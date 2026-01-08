@@ -19,6 +19,29 @@ export interface KeywordItem {
   keyword: string;
 }
 
+export interface CreateKeywordRequest {
+  keyword: string;
+}
+
+export interface CreateKeywordResponse {
+  id: string;
+  keyword: string;
+}
+
+export interface UpdateKeywordRequest {
+  keyword: string;
+}
+
+export interface UpdateKeywordResponse {
+  id: string;
+  keyword: string;
+}
+
+export interface DeleteKeywordResponse {
+  success: boolean;
+  message: string;
+}
+
 export interface GetKeywordsResponse {
   success: boolean;
   total: number;

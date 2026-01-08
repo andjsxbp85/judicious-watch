@@ -16,6 +16,11 @@ const ENDPOINTS = {
   // ============================================
   SCRAPE_MULTI_KEYWORD: `${APP_BASE_URL_API}/scrape/multi-keyword`,
   GET_KEYWORDS: `${APP_BASE_URL_API}/scrape/keywords`,
+  CREATE_KEYWORD: `${APP_BASE_URL_API}/scrape/keywords`,
+  UPDATE_KEYWORD: (keywordId: string) =>
+    `${APP_BASE_URL_API}/scrape/keywords/${keywordId}`,
+  DELETE_KEYWORD: (keywordId: string) =>
+    `${APP_BASE_URL_API}/scrape/keywords/${keywordId}`,
   GET_SCRAPED_DATA: `${APP_BASE_URL_API}/scrape/multi-keyword`,
 
   // ============================================

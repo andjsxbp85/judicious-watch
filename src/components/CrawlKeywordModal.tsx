@@ -35,11 +35,13 @@ interface Keyword {
 interface CrawlKeywordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCrawlSuccess?: () => void;
 }
 
 const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   open,
   onOpenChange,
+  onCrawlSuccess,
 }) => {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -178,6 +180,11 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
         title: "Crawl Berhasil",
         description: `Berhasil melakukan crawl ${keywords.length} keyword dengan ${searchEngine}`,
       });
+
+      // Trigger refresh di parent component
+      if (onCrawlSuccess) {
+        onCrawlSuccess();
+      }
 
       // Close modal after successful crawl
       onOpenChange(false);

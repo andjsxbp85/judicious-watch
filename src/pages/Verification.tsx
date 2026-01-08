@@ -873,6 +873,7 @@ const Verification: React.FC = () => {
       <CrawlKeywordModal
         open={crawlModalOpen}
         onOpenChange={setCrawlModalOpen}
+        onCrawlSuccess={() => fetchDomains()}
       />
     </Layout>
   );

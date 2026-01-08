@@ -695,7 +695,7 @@ const Verification: React.FC = () => {
                           <div className="flex flex-col gap-1">
                             <span
                               id={`domain-name-${domain.id}`}
-                              className="font-medium truncate max-w-[280px]"
+                              className="font-medium break-all"
                             >
                               {domain.domain}
                             </span>
@@ -705,10 +705,10 @@ const Verification: React.FC = () => {
                                 href={domain.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 truncate max-w-[280px]"
+                                className="text-xs text-muted-foreground hover:text-primary flex items-start gap-1 break-all"
                               >
-                                {domain.url}
-                                <ExternalLink className="h-3 w-3 shrink-0" />
+                                <span className="break-all">{domain.url}</span>
+                                <ExternalLink className="h-3 w-3 shrink-0 mt-0.5" />
                               </a>
                             )}
                           </div>
@@ -857,29 +857,12 @@ const Verification: React.FC = () => {
       </div>
 
       {/* Detail Modal */}
-      {selectedDomain && (
-        <DomainDetailModal
-          domain={{
-            id: selectedDomain.id,
-            url: selectedDomain.url,
-            domain: selectedDomain.domain,
-            urlGroup: [],
-            status: selectedDomain.status,
-            confidenceScore: selectedDomain.confidenceScore,
-            screenshot: selectedDomain.screenshot,
-            extractedContent: "",
-            verifiedBy: selectedDomain.verifiedBy,
-            verifiedAt: selectedDomain.timestamp_latest,
-            crawledAt: selectedDomain.timestamp_latest || "",
-            keywords: [],
-            aiReasoning: selectedDomain.reasoning,
-            reasoning: selectedDomain.reasoning,
-          }}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onVerify={handleVerify}
-        />
-      )}
+      <DomainDetailModal
+        domainId={selectedDomain?.id || null}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onVerify={handleVerify}
+      />
 
       {/* Crawl Keyword Modal */}
       <CrawlKeywordModal

@@ -1,10 +1,18 @@
 import ENDPOINTS from "@/constants/endpoint";
-import type { TokenResponse, LoginInput, BackendUser } from "@/types/authTypes";
+import type {
+  TokenResponse,
+  LoginInput,
+  BackendUser,
+  AuthResult,
+} from "@/types/authTypes";
 
-export interface AuthResult {
-  user: BackendUser;
-  access_token: string;
-}
+// Re-export types for consumers
+export type {
+  AuthResult,
+  TokenResponse,
+  LoginInput,
+  BackendUser,
+} from "@/types/authTypes";
 
 export const authService = {
   /**

@@ -1,31 +1,8 @@
 import { APP_BASE_URL_API } from "@/constants/env";
+import type { User, UserCreateInput, UserUpdateInput } from "@/types/userTypes";
 
-export interface User {
-  id: string;
-  full_name: string;
-  email: string;
-  is_active: boolean;
-  is_admin: boolean;
-  last_login: string | null;
-  created_at: string;
-  updated_at: string | null;
-}
-
-export interface UserCreateInput {
-  full_name: string;
-  email: string;
-  password: string;
-  is_active: boolean;
-  is_admin: boolean;
-}
-
-export interface UserUpdateInput {
-  full_name?: string;
-  email?: string;
-  password?: string;
-  is_active?: boolean;
-  is_admin?: boolean;
-}
+// Re-export types for consumers
+export type { User, UserCreateInput, UserUpdateInput } from "@/types/userTypes";
 
 class UserService {
   private getAuthHeader(): HeadersInit {

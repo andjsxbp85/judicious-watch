@@ -139,7 +139,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {user?.username}
+                {user?.full_name}
               </p>
               <p className="text-xs text-sidebar-foreground/60 capitalize">
                 {user?.is_admin ? "Admin" : "User"}

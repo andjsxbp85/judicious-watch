@@ -21,4 +21,5 @@ export interface LoginInput {
 
 export interface AuthResult {
   user: BackendUser;
+  access_token: string;
 }

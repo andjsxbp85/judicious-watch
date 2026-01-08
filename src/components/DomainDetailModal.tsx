@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Domain } from "@/lib/mockData";
 import AIChatbot from "./AIChatbot";
 import ImageCarousel from "./ImageCarousel";
 import {
@@ -33,71 +32,111 @@ import {
   Link2,
   ChevronDown,
   Save,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { domainService } from "@/services/domainService";
+import type {
+  FrontendDomainDetail,
+  FrontendCrawlItem,
+} from "@/types/domainTypes";
+
+type DomainStatus = "not-verified" | "judol" | "non-judol";
 
 interface DomainDetailModalProps {
-  domain: Domain | null;
+  domainId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onVerify?: (domainId: string, status: "not-verified" | "judol" | "non-judol", reasoning?: string) => void;
+  onVerify?: (
+    domainId: string,
+    status: DomainStatus,
+    reasoning?: string
+  ) => void;
 }
 
-const getStatusBadgeClass = (status: Domain['status']) => {
+const getStatusBadgeClass = (status: DomainStatus) => {
   switch (status) {
-    case 'judol':
-      return 'badge-judol';
-    case 'non-judol':
-      return 'badge-non-judol';
+    case "judol":
+      return "badge-judol";
+    case "non-judol":
+      return "badge-non-judol";
     default:
-      return 'bg-muted text-muted-foreground';
+      return "bg-muted text-muted-foreground";
   }
 };
 
-const getStatusLabel = (status: Domain['status']) => {
+const getStatusLabel = (status: DomainStatus) => {
   switch (status) {
-    case 'judol':
-      return 'Judi Online';
-    case 'non-judol':
-      return 'Non Judi Online';
+    case "judol":
+      return "Judi Online";
+    case "non-judol":
+      return "Non Judi Online";
     default:
-      return 'Not Verified';
+      return "Not Verified";
   }
 };
 
 const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
-  domain,
+  domainId,
   open,
   onOpenChange,
   onVerify,
 }) => {
-  const [currentStatus, setCurrentStatus] = useState<Domain['status']>(domain?.status || 'not-verified');
-  const [reasoning, setReasoning] = useState<string>(domain?.reasoning || '');
+  // API data state
+  const [domainDetail, setDomainDetail] = useState<FrontendDomainDetail | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [currentStatus, setCurrentStatus] =
+    useState<DomainStatus>("not-verified");
+  const [reasoning, setReasoning] = useState<string>("");
   const [hasChanges, setHasChanges] = useState(false);
-  const [selectedUrlIndex, setSelectedUrlIndex] = useState(0);
+  const [selectedCrawlIndex, setSelectedCrawlIndex] = useState(0);
 
-  // Reset state when domain changes
+  // Fetch domain detail when modal opens
   useEffect(() => {
-    if (domain) {
-      setCurrentStatus(domain.status);
-      setReasoning(domain.reasoning || '');
-      setHasChanges(false);
-      setSelectedUrlIndex(0);
+    if (open && domainId) {
+      fetchDomainDetail(domainId);
     }
-  }, [domain]);
+  }, [open, domainId]);
 
-  if (!domain) return null;
+  const fetchDomainDetail = async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const detail = await domainService.getDomainDetailForFrontend(id);
+      setDomainDetail(detail);
 
-  // Get URL group data - fallback to single URL if urlGroup not available
-  const urlGroup = domain.urlGroup && domain.urlGroup.length > 0
-    ? domain.urlGroup
-    : [{ url: domain.url, screenshot: domain.screenshot }];
+      // Initialize form state from first crawl
+      if (detail.crawls.length > 0) {
+        const firstCrawl = detail.crawls[0];
+        setCurrentStatus(firstCrawl.status);
+        setReasoning(firstCrawl.reasoning || "");
+      }
+      setSelectedCrawlIndex(0);
+      setHasChanges(false);
+    } catch (err) {
+      console.error("Failed to fetch domain detail:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch domain detail"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Get screenshots from urlGroup
-  const screenshots = urlGroup.map(entry => entry.screenshot);
-  const currentUrl = urlGroup[selectedUrlIndex]?.url || domain.url;
+  // Get current crawl data
+  const currentCrawl: FrontendCrawlItem | null =
+    domainDetail?.crawls[selectedCrawlIndex] || null;
 
-  const handleStatusChange = (newStatus: "not-verified" | "judol" | "non-judol") => {
+  // Get screenshots from all crawls
+  const screenshots =
+    domainDetail?.crawls.map((crawl) => crawl.screenshot) || [];
+
+  const handleStatusChange = (newStatus: DomainStatus) => {
     if (newStatus !== currentStatus) {
       setCurrentStatus(newStatus);
       setHasChanges(true);
@@ -106,35 +145,91 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
   const handleReasoningChange = (value: string) => {
     setReasoning(value);
-    setHasChanges(value !== (domain.reasoning || '') || currentStatus !== domain.status);
+    const originalReasoning = currentCrawl?.reasoning || "";
+    const originalStatus = currentCrawl?.status || "not-verified";
+    setHasChanges(
+      value !== originalReasoning || currentStatus !== originalStatus
+    );
   };
 
   const handleSave = () => {
-    if (onVerify) {
-      onVerify(domain.id, currentStatus, reasoning);
+    if (onVerify && domainId) {
+      onVerify(domainId, currentStatus, reasoning);
       setHasChanges(false);
       toast.success("Perubahan berhasil disimpan");
     }
   };
 
-  const handleUrlChange = (value: string) => {
+  const handleCrawlChange = (value: string) => {
     const index = parseInt(value, 10);
-    setSelectedUrlIndex(index);
+    setSelectedCrawlIndex(index);
+
+    // Update form state based on selected crawl
+    if (domainDetail && domainDetail.crawls[index]) {
+      const crawl = domainDetail.crawls[index];
+      setCurrentStatus(crawl.status);
+      setReasoning(crawl.reasoning || "");
+      setHasChanges(false);
+    }
   };
 
   const handleCarouselIndexChange = (index: number) => {
-    setSelectedUrlIndex(index);
+    setSelectedCrawlIndex(index);
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-6xl h-[90vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Memuat detail domain...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-6xl h-[90vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4 text-destructive">
+            <p>{error}</p>
+            <Button
+              variant="outline"
+              onClick={() => domainId && fetchDomainDetail(domainId)}
+            >
+              Coba Lagi
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // No data state
+  if (!domainDetail || !currentCrawl) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent id="domain-detail-modal" className="max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden">
+      <DialogContent
+        id="domain-detail-modal"
+        className="max-w-6xl h-[90vh] p-0 gap-0 overflow-hidden"
+      >
         <DialogHeader className="p-6 pb-4 border-b border-border">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <DialogTitle id="modal-domain-title" className="text-xl font-bold truncate">
-                  {domain.domain}
+                <DialogTitle
+                  id="modal-domain-title"
+                  className="text-xl font-bold truncate"
+                >
+                  {domainDetail.domainName}
                 </DialogTitle>
                 {hasChanges && (
                   <Button
@@ -150,27 +245,29 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Link2 className="h-4 w-4 shrink-0" />
-                {urlGroup.length > 1 ? (
+                {domainDetail.crawls.length > 1 ? (
                   <Select
-                    value={selectedUrlIndex.toString()}
-                    onValueChange={handleUrlChange}
+                    value={selectedCrawlIndex.toString()}
+                    onValueChange={handleCrawlChange}
                   >
-                    <SelectTrigger 
-                      id="modal-domain-url" 
+                    <SelectTrigger
+                      id="modal-domain-url"
                       className="h-auto p-0 border-0 bg-transparent text-muted-foreground hover:text-primary focus:ring-0 focus:ring-offset-0 w-auto max-w-[400px]"
                     >
                       <SelectValue>
-                        <span className="truncate">{currentUrl}</span>
+                        <span className="truncate">{currentCrawl.url}</span>
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent className="max-w-[500px]">
-                      {urlGroup.map((entry, index) => (
-                        <SelectItem 
-                          key={index} 
+                      {domainDetail.crawls.map((crawl, index) => (
+                        <SelectItem
+                          key={crawl.crawl_id}
                           value={index.toString()}
                           className="truncate"
                         >
-                          <span className="truncate block max-w-[450px]">{entry.url}</span>
+                          <span className="truncate block max-w-[450px]">
+                            {crawl.url}
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -178,16 +275,16 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 ) : (
                   <a
                     id="modal-domain-url"
-                    href={currentUrl}
+                    href={currentCrawl.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate hover:text-primary transition-colors"
                   >
-                    {currentUrl}
+                    {currentCrawl.url}
                   </a>
                 )}
                 <a
-                  href={currentUrl}
+                  href={currentCrawl.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"
@@ -198,24 +295,37 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
             </div>
             {onVerify ? (
               <DropdownMenu>
-                <DropdownMenuTrigger id="modal-status-badge" className="focus:outline-none">
-                  <Badge 
-                    className={`${getStatusBadgeClass(currentStatus)} cursor-pointer hover:opacity-80 flex items-center gap-1`}
+                <DropdownMenuTrigger
+                  id="modal-status-badge"
+                  className="focus:outline-none"
+                >
+                  <Badge
+                    className={`${getStatusBadgeClass(
+                      currentStatus
+                    )} cursor-pointer hover:opacity-80 flex items-center gap-1`}
                   >
                     {getStatusLabel(currentStatus)}
                     <ChevronDown className="h-3 w-3" />
                   </Badge>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent id="status-dropdown-menu" align="end" className="z-[100]">
-                  <DropdownMenuItem 
+                <DropdownMenuContent
+                  id="status-dropdown-menu"
+                  align="end"
+                  className="z-[100]"
+                >
+                  <DropdownMenuItem
                     id="status-option-not-verified"
                     onClick={() => handleStatusChange("not-verified")}
-                    className={currentStatus === "not-verified" ? "bg-muted" : ""}
+                    className={
+                      currentStatus === "not-verified" ? "bg-muted" : ""
+                    }
                   >
-                    <Badge className="bg-muted text-muted-foreground mr-2">Not Verified</Badge>
+                    <Badge className="bg-muted text-muted-foreground mr-2">
+                      Not Verified
+                    </Badge>
                     {currentStatus === "not-verified" && "✓"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     id="status-option-judol"
                     onClick={() => handleStatusChange("judol")}
                     className={currentStatus === "judol" ? "bg-muted" : ""}
@@ -223,7 +333,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     <Badge className="badge-judol mr-2">Judol</Badge>
                     {currentStatus === "judol" && "✓"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     id="status-option-non-judol"
                     onClick={() => handleStatusChange("non-judol")}
                     className={currentStatus === "non-judol" ? "bg-muted" : ""}
@@ -234,43 +344,59 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Badge 
+              <Badge
                 id="modal-status-badge"
-                className={getStatusBadgeClass(domain.status)}
+                className={getStatusBadgeClass(currentStatus)}
               >
-                {getStatusLabel(domain.status)}
+                {getStatusLabel(currentStatus)}
               </Badge>
             )}
           </div>
         </DialogHeader>
 
-        <div id="domain-detail-content" className="flex flex-col lg:flex-row flex-1 overflow-hidden">
+        <div
+          id="domain-detail-content"
+          className="flex flex-col lg:flex-row flex-1 overflow-hidden"
+        >
           {/* Left Panel - Domain Info */}
-          <div id="domain-info-panel" className="lg:w-1/2 border-r border-border overflow-y-auto scrollbar-thin">
+          <div
+            id="domain-info-panel"
+            className="lg:w-1/2 border-r border-border overflow-y-auto scrollbar-thin"
+          >
             <div className="p-6 space-y-6">
               {/* Confidence Score */}
               <div id="confidence-score-section" className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span id="confidence-label" className="text-sm font-medium">Confidence Score</span>
+                  <span id="confidence-label" className="text-sm font-medium">
+                    Confidence Score
+                  </span>
                   <span
                     id="confidence-score-value"
                     className={`text-lg font-bold ${
-                      domain.confidenceScore >= 80
-                        ? domain.status === "judol"
+                      currentCrawl.confidenceScore >= 80
+                        ? currentStatus === "judol"
                           ? "text-destructive"
                           : "text-success"
                         : "text-warning"
                     }`}
                   >
-                    {domain.confidenceScore}%
+                    {currentCrawl.confidenceScore}%
                   </span>
                 </div>
-                <Progress id="confidence-progress" value={domain.confidenceScore} className="h-3" />
+                <Progress
+                  id="confidence-progress"
+                  value={currentCrawl.confidenceScore}
+                  className="h-3"
+                />
               </div>
 
               {/* Reasoning Text Area */}
               <div id="reasoning-section" className="space-y-3">
-                <label id="reasoning-label" htmlFor="reasoning-textarea" className="text-sm font-medium">
+                <label
+                  id="reasoning-label"
+                  htmlFor="reasoning-textarea"
+                  className="text-sm font-medium"
+                >
                   Reasoning
                 </label>
                 <Textarea
@@ -285,73 +411,81 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
               {/* Metadata */}
               <div id="metadata-section" className="grid grid-cols-2 gap-4">
                 <div id="crawled-date-section" className="space-y-1">
-                  <span id="crawled-date-label" className="text-xs text-muted-foreground">Crawled</span>
-                  <div id="crawled-date" className="flex items-center gap-2 text-sm">
+                  <span
+                    id="crawled-date-label"
+                    className="text-xs text-muted-foreground"
+                  >
+                    Crawled
+                  </span>
+                  <div
+                    id="crawled-date"
+                    className="flex items-center gap-2 text-sm"
+                  >
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {new Date(domain.crawledAt).toLocaleDateString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(currentCrawl.timestamp).toLocaleDateString(
+                      "id-ID",
+                      {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
                   </div>
                 </div>
-                {domain.verifiedBy && (
-                  <div id="verified-by-section" className="space-y-1">
-                    <span id="verified-by-label" className="text-xs text-muted-foreground">
-                      Diverifikasi oleh
+                {currentCrawl.isAmp && (
+                  <div id="amp-indicator-section" className="space-y-1">
+                    <span className="text-xs text-muted-foreground">
+                      Format
                     </span>
-                    <div id="verified-by" className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      {domain.verifiedBy}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Badge variant="secondary">AMP</Badge>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* Keywords */}
-              <div id="keywords-section" className="space-y-3">
-                <span id="keywords-label" className="text-sm font-medium">
-                  Kata Kunci Terdeteksi
-                </span>
-                <div id="keywords-container" className="flex flex-wrap gap-2">
-                  {domain.keywords.map((keyword, i) => (
-                    <Badge 
-                      key={i} 
-                      id={`keyword-badge-${i}`}
-                      variant="secondary" 
-                      className="text-xs"
-                    >
-                      {keyword}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
               {/* Screenshot Carousel - Controlled mode, synced with URL dropdown */}
               <div id="screenshot-section" className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span id="screenshot-label" className="text-sm font-medium">Screenshot</span>
-                  <span id="screenshot-count" className="text-xs text-muted-foreground">
-                    {urlGroup.length} URL dalam domain ini
+                  <span id="screenshot-label" className="text-sm font-medium">
+                    Screenshot
+                  </span>
+                  <span
+                    id="screenshot-count"
+                    className="text-xs text-muted-foreground"
+                  >
+                    {domainDetail.crawls.length} URL dalam domain ini
                   </span>
                 </div>
                 <ImageCarousel
                   images={screenshots}
-                  alt={`Screenshot of ${domain.domain}`}
+                  alt={`Screenshot of ${domainDetail.domainName}`}
                   autoPlay={false}
-                  currentIndex={selectedUrlIndex}
+                  currentIndex={selectedCrawlIndex}
                   onIndexChange={handleCarouselIndexChange}
                 />
               </div>
 
               {/* Extracted Content */}
               <div id="extracted-content-section" className="space-y-3">
-                <span id="extracted-content-label" className="text-sm font-medium">Konten Terekstrak</span>
-                <ScrollArea id="extracted-content-area" className="h-40 rounded-lg border border-border p-4 bg-muted/30">
-                  <p id="extracted-content-text" className="text-sm text-muted-foreground leading-relaxed">
-                    {domain.extractedContent}
+                <span
+                  id="extracted-content-label"
+                  className="text-sm font-medium"
+                >
+                  Konten Terekstrak
+                </span>
+                <ScrollArea
+                  id="extracted-content-area"
+                  className="h-40 rounded-lg border border-border p-4 bg-muted/30"
+                >
+                  <p
+                    id="extracted-content-text"
+                    className="text-sm text-muted-foreground leading-relaxed"
+                  >
+                    {currentCrawl.innerText ||
+                      "Tidak ada konten yang terekstrak"}
                   </p>
                 </ScrollArea>
               </div>
@@ -359,8 +493,20 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
           </div>
 
           {/* Right Panel - AI Chatbot */}
-          <div id="ai-chatbot-panel" className="lg:w-1/2 flex flex-col bg-muted/20">
-            <AIChatbot domain={domain} />
+          <div
+            id="ai-chatbot-panel"
+            className="lg:w-1/2 flex flex-col bg-muted/20"
+          >
+            <AIChatbot
+              domain={{
+                domain: domainDetail.domainName,
+                status: currentStatus,
+                confidenceScore: currentCrawl.confidenceScore,
+                reasoning: reasoning,
+                extractedContent: currentCrawl.innerText,
+                keywords: [],
+              }}
+            />
           </div>
         </div>
       </DialogContent>

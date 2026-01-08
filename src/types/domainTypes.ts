@@ -23,16 +23,16 @@ export interface GetDomainsParams {
 
 // Single domain item from API response
 export interface DomainItem {
-  domain_id: number;
+  id: string;
   domain: string;
-  url: string | null;
+  url: string[];
   status: DomainStatus;
-  score: number;
-  reasoning: "Ada" | "Tidak Ada";
-  screenshot_path: string | null;
-  verifikator: string | null;
+  confidenceScore: number;
+  reasoning: string;
+  screenshot: string | null;
+  verifiedBy: string | null;
   timestamp_latest: string | null;
-  crawl_id: number | null;
+  crawl_id: string | null;
 }
 
 // API Response for GET /api/data/domains
@@ -56,5 +56,50 @@ export interface FrontendDomain {
   reasoning: string;
   verifiedBy: string | null;
   timestamp_latest: string | null;
-  crawl_id: number | null;
+  crawl_id: string | null;
+}
+
+// ============================================
+// DOMAIN DETAIL API TYPES
+// ============================================
+
+// Single crawl history item from domain detail API
+export interface CrawlHistoryItem {
+  crawl_id: string;
+  url: string;
+  timestamp: string;
+  status: DomainStatus;
+  confidence_score: number;
+  reasoning: string | null;
+  inner_text: string;
+  screenshot: string | null;
+  is_amp: boolean;
+}
+
+// API Response for GET /api/data/domains/{domain_id}
+export interface DomainDetailResponse {
+  success: boolean;
+  domain_id: string;
+  domain_name: string;
+  crawls: CrawlHistoryItem[];
+}
+
+// Frontend formatted crawl item for display
+export interface FrontendCrawlItem {
+  crawl_id: string;
+  url: string;
+  timestamp: string;
+  status: "not-verified" | "judol" | "non-judol";
+  confidenceScore: number;
+  reasoning: string;
+  innerText: string;
+  screenshot: string;
+  isAmp: boolean;
+}
+
+// Frontend formatted domain detail
+export interface FrontendDomainDetail {
+  domainId: string;
+  domainName: string;
+  crawls: FrontendCrawlItem[];
 }

@@ -5,6 +5,26 @@ import type {
   GetDomainsResponse,
   DomainItem,
   FrontendDomain,
+  DomainDetailResponse,
+  CrawlHistoryItem,
+  FrontendCrawlItem,
+  FrontendDomainDetail,
+} from "@/types/domainTypes";
+
+// Re-export types for consumers
+export type {
+  DomainStatus,
+  ReasoningFilter,
+  SortBy,
+  SortOrder,
+  GetDomainsParams,
+  DomainItem,
+  GetDomainsResponse,
+  FrontendDomain,
+  CrawlHistoryItem,
+  DomainDetailResponse,
+  FrontendCrawlItem,
+  FrontendDomainDetail,
 } from "@/types/domainTypes";
 
 // ============================================
@@ -27,26 +47,53 @@ function mapStatus(status: DomainItem["status"]): FrontendDomain["status"] {
 }
 
 /**
+ * Map API crawl history item to frontend format
+ */
+function mapCrawlToFrontend(item: CrawlHistoryItem): FrontendCrawlItem {
+  const screenshot =
+    item.screenshot && item.screenshot.trim() !== ""
+      ? item.screenshot.startsWith("data:image")
+        ? item.screenshot
+        : `data:image/png;base64,${item.screenshot}`
+      : "/screenshots/placeholder.png";
+
+  return {
+    crawl_id: item.crawl_id,
+    url: item.url,
+    timestamp: item.timestamp,
+    status: mapStatus(item.status),
+    confidenceScore: item.confidence_score,
+    reasoning: item.reasoning || "",
+    innerText: item.inner_text,
+    screenshot,
+    isAmp: item.is_amp,
+  };
+}
+
+/**
  * Map API domain item to frontend domain format
  */
 export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
   const screenshot =
-    item.screenshot_path && item.screenshot_path.trim() !== ""
-      ? item.screenshot_path.startsWith("data:image")
-        ? item.screenshot_path
-        : `data:image/png;base64,${item.screenshot_path}`
+    item.screenshot && item.screenshot.trim() !== ""
+      ? item.screenshot.startsWith("data:image")
+        ? item.screenshot
+        : `data:image/png;base64,${item.screenshot}`
       : "/screenshots/placeholder.png";
 
+  // Extract first URL from array, or empty string if array is empty/undefined
+  const url = Array.isArray(item.url) && item.url.length > 0 ? item.url[0] : "";
+
   return {
-    id: item.domain_id.toString(),
-    domain_id: item.domain_id,
+    id: item.id,
+    domain_id: parseInt(item.id) || 0,
     domain: item.domain,
-    url: item.url || "",
+    url,
     status: mapStatus(item.status),
-    confidenceScore: item.score,
+    confidenceScore: item.confidenceScore,
     screenshot,
     reasoning: item.reasoning,
-    verifiedBy: item.verifikator,
+    verifiedBy: item.verifiedBy,
     timestamp_latest: item.timestamp_latest,
     crawl_id: item.crawl_id,
   };
@@ -125,6 +172,34 @@ export const domainService = {
       total: response.total,
       page: response.page,
       limit: response.limit,
+    };
+  },
+
+  /**
+   * Get domain detail with crawl history
+   * @param domainId - The domain ID to fetch details for
+   * @returns Promise with domain detail response
+   */
+  async getDomainDetail(domainId: string): Promise<DomainDetailResponse> {
+    return apiClient(ENDPOINTS.GET_DOMAIN_DETAIL(domainId), {
+      method: "GET",
+    });
+  },
+
+  /**
+   * Get domain detail and map to frontend format
+   * @param domainId - The domain ID to fetch details for
+   * @returns Promise with frontend-formatted domain detail
+   */
+  async getDomainDetailForFrontend(
+    domainId: string
+  ): Promise<FrontendDomainDetail> {
+    const response = await this.getDomainDetail(domainId);
+
+    return {
+      domainId: response.domain_id,
+      domainName: response.domain_name,
+      crawls: response.crawls.map(mapCrawlToFrontend),
     };
   },
 };

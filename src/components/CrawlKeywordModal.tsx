@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -49,7 +49,39 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
   const [aiReasoning, setAiReasoning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
   const { toast } = useToast();
+
+  // Fetch keywords from database when modal opens
+  useEffect(() => {
+    if (open) {
+      fetchKeywords();
+    }
+  }, [open]);
+
+  const fetchKeywords = async () => {
+    setIsFetchingKeywords(true);
+    try {
+      const response = await scrapeService.getKeywords();
+      if (response.success && response.data) {
+        setKeywords(
+          response.data.map((item) => ({
+            id: item.id,
+            keyword: item.keyword,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch keywords:", error);
+      toast({
+        title: "Gagal memuat keywords",
+        description: "Tidak dapat mengambil data keywords dari server",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingKeywords(false);
+    }
+  };
 
   const handleEdit = (keyword: Keyword) => {
     setEditingId(keyword.id);
@@ -386,7 +418,20 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                   </TableCell>
                 </TableRow>
               ))}
-              {keywords.length === 0 && (
+              {isFetchingKeywords ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={3}
+                    id="keyword-loading-message"
+                    className="text-center py-8 text-muted-foreground"
+                  >
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Memuat keywords...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : keywords.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={3}
@@ -396,7 +441,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                     Belum ada keyword. Klik "Add New Keyword" untuk menambahkan.
                   </TableCell>
                 </TableRow>
-              )}
+              ) : null}
             </TableBody>
           </Table>
         </div>

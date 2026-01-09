@@ -309,6 +309,23 @@ const Verification: React.FC = () => {
     );
   };
 
+  // Toggle select all rows
+  const toggleSelectAll = () => {
+    if (selectedRows.length === domains.length && domains.length > 0) {
+      // Deselect all
+      setSelectedRows([]);
+    } else {
+      // Select all visible domains
+      setSelectedRows(domains.map((d) => d.id));
+    }
+  };
+
+  // Check if all visible rows are selected
+  const isAllSelected =
+    domains.length > 0 && selectedRows.length === domains.length;
+  const isSomeSelected =
+    selectedRows.length > 0 && selectedRows.length < domains.length;
+
   // LLM processing state
   const [isProcessingLLM, setIsProcessingLLM] = useState(false);
 
@@ -408,8 +425,17 @@ const Verification: React.FC = () => {
                   placeholder="Cari domain..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
               {/* Filter Popover */}
@@ -655,7 +681,12 @@ const Verification: React.FC = () => {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead id="table-header-checkbox" className="w-[50px]">
-                      {/* Empty header for checkbox column */}
+                      <Checkbox
+                        id="select-all-checkbox"
+                        checked={isAllSelected || isSomeSelected}
+                        onCheckedChange={toggleSelectAll}
+                        aria-label="Select all domains"
+                      />
                     </TableHead>
                     <TableHead
                       id="table-header-domain"

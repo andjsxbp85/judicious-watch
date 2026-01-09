@@ -105,6 +105,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   const [reasoning, setReasoning] = useState<string>("");
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedCrawlIndex, setSelectedCrawlIndex] = useState(0);
+  const [isContentExpanded, setIsContentExpanded] = useState(false);
 
   // Fetch domain detail when modal opens
   useEffect(() => {
@@ -286,7 +287,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 >
                   {domainDetail.domainName}
                 </DialogTitle>
-                {/* Save button moved to footer
+                {/* Save button moved to footer */}
                 {hasChanges && (
                   <Button
                     id="save-changes-button"
@@ -298,7 +299,6 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     Save
                   </Button>
                 )}
-                */}
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Link2 className="h-4 w-4 shrink-0" />
@@ -450,22 +450,19 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 />
               </div>
 
-              {/* Reasoning Text Area */}
+              {/* Reasoning */}
               <div id="reasoning-section" className="space-y-3">
-                <label
-                  id="reasoning-label"
-                  htmlFor="reasoning-textarea"
-                  className="text-sm font-medium"
-                >
+                <span id="reasoning-label" className="text-sm font-medium">
                   Reasoning
-                </label>
-                <Textarea
-                  id="reasoning-textarea"
-                  placeholder="Masukkan alasan verifikasi..."
-                  value={reasoning}
-                  onChange={(e) => handleReasoningChange(e.target.value)}
-                  className="min-h-[100px] resize-none"
-                />
+                </span>
+                <div className="min-h-[100px] rounded-lg border border-border p-4 bg-muted/30">
+                  <p
+                    id="reasoning-text"
+                    className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap"
+                  >
+                    {reasoning || "Tidak ada reasoning dari LLM"}
+                  </p>
+                </div>
               </div>
 
               {/* Metadata */}
@@ -530,19 +527,36 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
               {/* Extracted Content */}
               <div id="extracted-content-section" className="space-y-3">
-                <span
-                  id="extracted-content-label"
-                  className="text-sm font-medium"
-                >
-                  Konten Terekstrak
-                </span>
+                <div className="flex items-center justify-between">
+                  <span
+                    id="extracted-content-label"
+                    className="text-sm font-medium"
+                  >
+                    Konten Terekstrak
+                  </span>
+                  {currentCrawl.innerText &&
+                    currentCrawl.innerText.length > 200 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsContentExpanded(!isContentExpanded)}
+                        className="h-8 text-xs"
+                      >
+                        {isContentExpanded
+                          ? "Tampilkan Lebih Sedikit"
+                          : "Tampilkan Semua"}
+                      </Button>
+                    )}
+                </div>
                 <ScrollArea
                   id="extracted-content-area"
-                  className="h-40 rounded-lg border border-border p-4 bg-muted/30"
+                  className={`rounded-lg border border-border p-4 bg-muted/30 transition-all duration-300 ${
+                    isContentExpanded ? "h-[600px]" : "h-40"
+                  }`}
                 >
                   <p
                     id="extracted-content-text"
-                    className="text-sm text-muted-foreground leading-relaxed"
+                    className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap"
                   >
                     {currentCrawl.innerText ||
                       "Tidak ada konten yang terekstrak"}
@@ -571,36 +585,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
         </div>
 
         {/* Footer with action buttons */}
-        <DialogFooter className="p-4 border-t border-border bg-background flex-shrink-0">
-          <div className="flex items-center justify-end gap-3 w-full">
-            <Button
-              id="modal-close-button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              <X className="h-4 w-4 mr-2" />
-              Tutup
-            </Button>
-            <Button
-              id="modal-save-button"
-              onClick={handleSave}
-              disabled={isUpdating || !hasChanges}
-              className="gap-2"
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Simpan
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogFooter>
+        <DialogFooter className="p-4 border-t border-border bg-background flex-shrink-0"></DialogFooter>
       </DialogContent>
     </Dialog>
   );

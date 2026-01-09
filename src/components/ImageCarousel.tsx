@@ -33,19 +33,23 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [zoomModalOpen, setZoomModalOpen] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  
+
   // Use controlled or internal index
   const isControlled = controlledIndex !== undefined;
   const currentIndex = isControlled ? controlledIndex : internalIndex;
-  
-  const setCurrentIndex = useCallback((indexOrFn: number | ((prev: number) => number)) => {
-    const newIndex = typeof indexOrFn === 'function' ? indexOrFn(currentIndex) : indexOrFn;
-    if (isControlled && onIndexChange) {
-      onIndexChange(newIndex);
-    } else {
-      setInternalIndex(newIndex);
-    }
-  }, [isControlled, onIndexChange, currentIndex]);
+
+  const setCurrentIndex = useCallback(
+    (indexOrFn: number | ((prev: number) => number)) => {
+      const newIndex =
+        typeof indexOrFn === "function" ? indexOrFn(currentIndex) : indexOrFn;
+      if (isControlled && onIndexChange) {
+        onIndexChange(newIndex);
+      } else {
+        setInternalIndex(newIndex);
+      }
+    },
+    [isControlled, onIndexChange, currentIndex]
+  );
 
   const goToNext = useCallback(() => {
     const newIndex = (currentIndex + 1) % images.length;
@@ -67,11 +71,11 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
   };
 
   const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 0.5, 4));
+    setZoomLevel((prev) => Math.min(prev + 0.5, 4));
   };
 
   const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 0.5, 0.5));
+    setZoomLevel((prev) => Math.max(prev - 0.5, 0.5));
   };
 
   const handleCloseZoomModal = () => {
@@ -112,7 +116,7 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Main Image */}
-        <div 
+        <div
           id="image-carousel-main"
           className="relative overflow-hidden rounded-lg border border-border shadow-sm cursor-pointer"
           onClick={handleImageClick}
@@ -172,7 +176,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
           {/* Image Counter */}
           {images.length > 1 && (
-            <div id="carousel-counter" className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+            <div
+              id="carousel-counter"
+              className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full"
+            >
               {currentIndex + 1} / {images.length}
             </div>
           )}
@@ -180,7 +187,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
         {/* Dot Indicators - Only show when multiple images */}
         {images.length > 1 && (
-          <div id="carousel-indicators" className="flex justify-center gap-1.5 mt-3">
+          <div
+            id="carousel-indicators"
+            className="flex justify-center gap-1.5 mt-3"
+          >
             {images.map((_, index) => (
               <button
                 key={index}
@@ -200,14 +210,17 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
       </div>
 
       {/* Zoom Modal */}
-      <Dialog open={zoomModalOpen} onOpenChange={setZoomModalOpen}>
-        <DialogContent 
-          id="screenshot-zoom-modal" 
-          className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] p-0 gap-0 overflow-hidden"
+      <Dialog open={zoomModalOpen} onOpenChange={handleCloseZoomModal}>
+        <DialogContent
+          id="screenshot-zoom-modal"
+          className="max-w-[95vw] max-h-[95vh] w-[95vw] h-[95vh] p-0 gap-0 overflow-hidden [&>button]:hidden"
         >
           <DialogHeader className="p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
-              <DialogTitle id="zoom-modal-title" className="text-lg font-semibold">
+              <DialogTitle
+                id="zoom-modal-title"
+                className="text-lg font-semibold"
+              >
                 Screenshot Zoom
               </DialogTitle>
               <div className="flex items-center gap-2">
@@ -222,7 +235,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
                   <ZoomOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Zoom Out</span>
                 </Button>
-                <span id="zoom-level-indicator" className="text-sm text-muted-foreground min-w-[60px] text-center">
+                <span
+                  id="zoom-level-indicator"
+                  className="text-sm text-muted-foreground min-w-[60px] text-center"
+                >
                   {Math.round(zoomLevel * 100)}%
                 </span>
                 <Button
@@ -249,14 +265,17 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
               </div>
             </div>
           </DialogHeader>
-          
-          <div 
+
+          <div
             id="zoom-image-container"
             className="flex-1 overflow-auto bg-muted/30 flex items-center justify-center p-4"
           >
             <div
               className="transition-transform duration-200 ease-out"
-              style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'center center' }}
+              style={{
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: "center center",
+              }}
             >
               <img
                 id="zoom-image"
@@ -269,7 +288,10 @@ const ImageCarousel: React.FC<ImageCarouselProps> = ({
 
           {/* Navigation in zoom modal when multiple images */}
           {images.length > 1 && (
-            <div id="zoom-navigation" className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 px-4 py-2 rounded-full">
+            <div
+              id="zoom-navigation"
+              className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-black/60 px-4 py-2 rounded-full"
+            >
               <Button
                 id="zoom-prev-btn"
                 variant="ghost"

@@ -58,8 +58,6 @@ import { domainService } from "@/services/domainService";
 import type { FrontendDomain } from "@/types/domainTypes";
 import type { GetDomainsParams, SortBy, SortOrder } from "@/types/domainTypes";
 
-const ITEMS_PER_PAGE = 10;
-
 type DomainStatus = FrontendDomain["status"];
 
 const getStatusBadgeClass = (status: DomainStatus) => {
@@ -107,6 +105,7 @@ const Verification: React.FC = () => {
   const [sortColumn, setSortColumn] = useState<SortBy>("domain");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Modal states
   const [selectedDomain, setSelectedDomain] = useState<FrontendDomain | null>(
@@ -162,7 +161,7 @@ const Verification: React.FC = () => {
         max_score: scoreRange[1],
         reasoning: apiReasoning,
         page: currentPage,
-        limit: ITEMS_PER_PAGE,
+        limit: itemsPerPage,
         sort_by: sortColumn,
         order: sortOrder,
       };
@@ -187,6 +186,7 @@ const Verification: React.FC = () => {
     scoreRange,
     reasoningFilter,
     currentPage,
+    itemsPerPage,
     sortColumn,
     sortOrder,
     toast,
@@ -206,7 +206,7 @@ const Verification: React.FC = () => {
   }, [searchQuery]);
 
   // Calculate pagination
-  const totalPages = Math.ceil(totalDomains / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalDomains / itemsPerPage);
 
   // Apply filters
   const applyFilters = () => {
@@ -500,7 +500,19 @@ const Verification: React.FC = () => {
                       </Label>
                       <Select
                         value={tempStatusFilter}
-                        onValueChange={setTempStatusFilter}
+                        onValueChange={(value) => {
+                          setTempStatusFilter(value);
+                          // Auto-adjust score range based on status
+                          if (value === "judol") {
+                            setTempScoreRange([90, 100]);
+                          } else if (value === "non-judol") {
+                            setTempScoreRange([0, 60]);
+                          } else if (value === "not-verified") {
+                            setTempScoreRange([60, 80]);
+                          } else {
+                            setTempScoreRange([0, 100]);
+                          }
+                        }}
                       >
                         <SelectTrigger
                           id="status-filter-select"
@@ -568,44 +580,6 @@ const Verification: React.FC = () => {
                         <span id="filter-score-min-label">0</span>
                         <span id="filter-score-max-label">100</span>
                       </div>
-                    </div>
-
-                    {/* Reasoning Filter */}
-                    <div id="filter-reasoning-section" className="space-y-2">
-                      <Label
-                        id="filter-reasoning-label"
-                        className="text-sm font-medium"
-                      >
-                        Reasoning
-                      </Label>
-                      <Select
-                        value={tempReasoningFilter}
-                        onValueChange={setTempReasoningFilter}
-                      >
-                        <SelectTrigger
-                          id="reasoning-filter-select"
-                          className="w-full"
-                        >
-                          <SelectValue placeholder="Pilih Reasoning" />
-                        </SelectTrigger>
-                        <SelectContent
-                          id="reasoning-filter-dropdown"
-                          className="bg-popover border border-border"
-                        >
-                          <SelectItem id="reasoning-filter-all" value="all">
-                            Semua
-                          </SelectItem>
-                          <SelectItem id="reasoning-filter-ada" value="ada">
-                            Ada
-                          </SelectItem>
-                          <SelectItem
-                            id="reasoning-filter-tidak-ada"
-                            value="tidak-ada"
-                          >
-                            Tidak Ada
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
 
                     {/* Apply Filter Button */}
@@ -886,66 +860,104 @@ const Verification: React.FC = () => {
             </div>
 
             {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-border">
-                <p
-                  id="pagination-info"
-                  className="text-sm text-muted-foreground"
-                >
-                  Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} -{" "}
-                  {Math.min(currentPage * ITEMS_PER_PAGE, totalDomains)} dari{" "}
-                  {totalDomains} domain
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    id="pagination-prev-button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1 || isLoading}
+            {totalDomains > 0 && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t border-border">
+                <div className="flex items-center gap-4">
+                  <p
+                    id="pagination-info"
+                    className="text-sm text-muted-foreground"
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                      // Show pages around current page
-                      let page: number;
-                      if (totalPages <= 5) {
-                        page = i + 1;
-                      } else if (currentPage <= 3) {
-                        page = i + 1;
-                      } else if (currentPage >= totalPages - 2) {
-                        page = totalPages - 4 + i;
-                      } else {
-                        page = currentPage - 2 + i;
-                      }
-                      return (
-                        <Button
-                          key={page}
-                          id={`pagination-page-${page}`}
-                          variant={currentPage === page ? "default" : "ghost"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                          disabled={isLoading}
-                        >
-                          {page}
-                        </Button>
-                      );
-                    })}
+                    Menampilkan {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                    {Math.min(currentPage * itemsPerPage, totalDomains)} dari{" "}
+                    {totalDomains} domain
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Label
+                      htmlFor="items-per-page"
+                      className="text-sm text-muted-foreground whitespace-nowrap"
+                    >
+                      Per halaman:
+                    </Label>
+                    <Select
+                      value={itemsPerPage.toString()}
+                      onValueChange={(value) => {
+                        setItemsPerPage(Number(value));
+                        setCurrentPage(1);
+                      }}
+                    >
+                      <SelectTrigger
+                        id="items-per-page"
+                        className="w-[70px] h-8"
+                      >
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5</SelectItem>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="25">25</SelectItem>
+                        <SelectItem value="50">50</SelectItem>
+                        <SelectItem value="100">100</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Button
-                    id="pagination-next-button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      setCurrentPage((p) => Math.min(totalPages, p + 1))
-                    }
-                    disabled={currentPage === totalPages || isLoading}
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
                 </div>
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      id="pagination-prev-button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      disabled={currentPage === 1 || isLoading}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from(
+                        { length: Math.min(totalPages, 5) },
+                        (_, i) => {
+                          // Show pages around current page
+                          let page: number;
+                          if (totalPages <= 5) {
+                            page = i + 1;
+                          } else if (currentPage <= 3) {
+                            page = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            page = totalPages - 4 + i;
+                          } else {
+                            page = currentPage - 2 + i;
+                          }
+                          return (
+                            <Button
+                              key={page}
+                              id={`pagination-page-${page}`}
+                              variant={
+                                currentPage === page ? "default" : "ghost"
+                              }
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className="w-8 h-8 p-0"
+                              disabled={isLoading}
+                            >
+                              {page}
+                            </Button>
+                          );
+                        }
+                      )}
+                    </div>
+                    <Button
+                      id="pagination-next-button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                      }
+                      disabled={currentPage === totalPages || isLoading}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

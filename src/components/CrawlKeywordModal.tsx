@@ -52,6 +52,12 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [aiReasoning, setAiReasoning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
+  // Loading states untuk prevent double-click
+  const [isAddingKeyword, setIsAddingKeyword] = useState(false);
+  const [isSavingKeyword, setIsSavingKeyword] = useState(false);
+  const [deletingKeywordId, setDeletingKeywordId] = useState<string | null>(
+    null
+  );
   const { toast } = useToast();
 
   // Fetch keywords from database when modal opens
@@ -100,8 +106,9 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
       return;
     }
 
-    if (!editingId) return;
+    if (!editingId || isSavingKeyword) return;
 
+    setIsSavingKeyword(true);
     try {
       const updatedKeyword = await scrapeService.updateKeyword(editingId, {
         keyword: editValue.trim(),
@@ -126,6 +133,8 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
             : "Tidak dapat mengubah keyword",
         variant: "destructive",
       });
+    } finally {
+      setIsSavingKeyword(false);
     }
   };
 
@@ -135,6 +144,10 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   };
 
   const handleDelete = async (id: string) => {
+    // Prevent double-click - jika keyword ini sedang dihapus, skip
+    if (deletingKeywordId === id) return;
+
+    setDeletingKeywordId(id);
     try {
       await scrapeService.deleteKeyword(id);
       setKeywords((prev) => prev.filter((k) => k.id !== id));
@@ -152,6 +165,8 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
             : "Tidak dapat menghapus keyword",
         variant: "destructive",
       });
+    } finally {
+      setDeletingKeywordId(null);
     }
   };
 
@@ -165,6 +180,10 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
       return;
     }
 
+    // Prevent double-click
+    if (isAddingKeyword) return;
+
+    setIsAddingKeyword(true);
     try {
       const createdKeyword = await scrapeService.createKeyword({
         keyword: newKeyword.trim(),
@@ -187,6 +206,8 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
             : "Tidak dapat menambahkan keyword",
         variant: "destructive",
       });
+    } finally {
+      setIsAddingKeyword(false);
     }
   };
 
@@ -288,10 +309,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                 onValueChange={(value) => setSearchEngine(value as CrawlEngine)}
                 disabled={isLoading}
               >
-                <SelectTrigger
-                  id="search-engine-select"
-                  className="w-full sm:w-[180px]"
-                >
+                <SelectTrigger id="search-engine-select" className="flex-1">
                   <SelectValue placeholder="Pilih Search Engine" />
                 </SelectTrigger>
                 <SelectContent>
@@ -306,22 +324,6 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                   </SelectItem>
                 </SelectContent>
               </Select>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="ai-reasoning-checkbox"
-                  checked={aiReasoning}
-                  onCheckedChange={(checked) =>
-                    setAiReasoning(checked === true)
-                  }
-                  disabled={isLoading}
-                />
-                <label
-                  htmlFor="ai-reasoning-checkbox"
-                  className="text-sm cursor-pointer"
-                >
-                  AI Reasoning
-                </label>
-              </div>
               <Button
                 id="start-crawl-btn"
                 variant="default"
@@ -347,23 +349,30 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddKeyword();
+                  if (e.key === "Enter" && !isAddingKeyword) handleAddKeyword();
                   if (e.key === "Escape") handleCancelAdd();
                 }}
                 autoFocus
+                disabled={isAddingKeyword}
               />
               <Button
                 id="confirm-add-keyword-btn"
                 size="icon"
                 onClick={handleAddKeyword}
+                disabled={isAddingKeyword}
               >
-                <Check className="h-4 w-4" />
+                {isAddingKeyword ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
               </Button>
               <Button
                 id="cancel-add-keyword-btn"
                 size="icon"
                 variant="outline"
                 onClick={handleCancelAdd}
+                disabled={isAddingKeyword}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -426,8 +435,13 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                             variant="ghost"
                             onClick={handleSaveEdit}
                             className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            disabled={isSavingKeyword}
                           >
-                            <Check className="h-4 w-4" />
+                            {isSavingKeyword ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
                           </Button>
                           <Button
                             id={`cancel-edit-keyword-btn-${keyword.id}`}
@@ -435,6 +449,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                             variant="ghost"
                             onClick={handleCancelEdit}
                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                            disabled={isSavingKeyword}
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -457,9 +472,15 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
                             variant="ghost"
                             onClick={() => handleDelete(keyword.id)}
                             className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                            disabled={isLoading}
+                            disabled={
+                              isLoading || deletingKeywordId === keyword.id
+                            }
                           >
-                            <Trash2 className="h-4 w-4" />
+                            {deletingKeywordId === keyword.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
                           </Button>
                         </>
                       )}

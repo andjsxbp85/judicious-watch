@@ -86,6 +86,7 @@ export interface CrawlHistoryItem {
   inner_text: string;
   screenshot: string | null;
   is_amp: boolean;
+  keyword: string | null;
 }
 
 // API Response for GET /api/data/domains/{domain_id}
@@ -107,6 +108,7 @@ export interface FrontendCrawlItem {
   innerText: string;
   screenshot: string;
   isAmp: boolean;
+  keyword: string | null;
 }
 
 // Frontend formatted domain detail

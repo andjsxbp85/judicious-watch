@@ -465,6 +465,28 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 </div>
               </div>
 
+              {/* Keywords */}
+              <div id="keywords-section" className="space-y-3">
+                <span id="keywords-label" className="text-sm font-medium">
+                  Kata Kunci Terdeteksi
+                </span>
+                <div id="keywords-container" className="flex flex-wrap gap-2">
+                  {currentCrawl.keyword ? (
+                    <Badge
+                      id="keyword-badge-0"
+                      variant="secondary"
+                      className="text-xs"
+                    >
+                      {currentCrawl.keyword}
+                    </Badge>
+                  ) : (
+                    <span className="text-sm text-muted-foreground italic">
+                      Tidak ada kata kunci
+                    </span>
+                  )}
+                </div>
+              </div>
+
               {/* Metadata */}
               <div id="metadata-section" className="grid grid-cols-2 gap-4">
                 <div id="crawled-date-section" className="space-y-1">

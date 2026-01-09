@@ -35,7 +35,7 @@ const ENDPOINTS = {
   // ============================================
   // INFERENCE
   // ============================================
-  SEND_TO_LLM: `${APP_BASE_URL_API}/api/inference/to-llm`,
+  SEND_TO_LLM: `${APP_BASE_URL_API}/api/inference/inference-text`,
 } as const;
 
 export default ENDPOINTS;

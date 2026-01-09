@@ -108,6 +108,7 @@ function mapCrawlToFrontend(item: CrawlHistoryItem): FrontendCrawlItem {
     innerText: item.inner_text,
     screenshot: formatScreenshot(item.screenshot),
     isAmp: item.is_amp,
+    keyword: item.keyword,
   };
 }
 

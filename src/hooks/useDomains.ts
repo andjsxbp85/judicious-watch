@@ -108,18 +108,23 @@ export function useDomains(params: UseDomainsParams = {}): UseDomainsReturn {
     setCurrentPage(1);
   }, []);
 
-  // Handle column sorting
+  // Handle column sorting with stable reference
   const handleSort = useCallback(
     (column: SortBy) => {
-      if (sortColumn === column) {
-        setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-      } else {
-        setSortColumn(column);
-        setSortOrder("asc");
-      }
+      setSortColumn((prevColumn) => {
+        if (prevColumn === column) {
+          // Same column, just toggle order
+          setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+          return prevColumn;
+        } else {
+          // Different column, reset to default order
+          setSortOrder(column === "domain" ? "asc" : "desc");
+          return column;
+        }
+      });
       setCurrentPage(1);
     },
-    [sortColumn]
+    [] // Empty deps - stable reference
   );
 
   // Build API params
@@ -131,16 +136,16 @@ export function useDomains(params: UseDomainsParams = {}): UseDomainsReturn {
     else if (statusFilter === "manual-check") apiStatus = "manual_check";
 
     // Map frontend reasoning filter to API reasoning
-    let apiReasoning: GetDomainsParams["reasoning"] = undefined;
-    if (reasoningFilter === "ada") apiReasoning = "has_reasoning";
-    else if (reasoningFilter === "tidak-ada") apiReasoning = "no_reasoning";
+    // let apiReasoning: GetDomainsParams["reasoning"] = undefined;
+    // if (reasoningFilter === "ada") apiReasoning = "has_reasoning";
+    // else if (reasoningFilter === "tidak-ada") apiReasoning = "no_reasoning";
 
     return {
       search: searchQuery || undefined,
       status: apiStatus,
-      min_score: scoreRange[0],
-      max_score: scoreRange[1],
-      reasoning: apiReasoning,
+      // min_score: scoreRange[0],
+      // max_score: scoreRange[1],
+      // reasoning: apiReasoning,
       page: currentPage,
       limit: itemsPerPage,
       sort_by: sortColumn,

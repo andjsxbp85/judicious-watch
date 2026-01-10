@@ -7,7 +7,7 @@ export type DomainStatus =
   | "judol"
   | "non_judol"
   | "manual_check";
-export type ReasoningFilter = "all" | "has_reasoning" | "no_reasoning";
+// export type ReasoningFilter = "all" | "has_reasoning" | "no_reasoning";
 export type SortBy = "domain" | "score" | "timestamp";
 export type SortOrder = "asc" | "desc";
 
@@ -15,9 +15,9 @@ export type SortOrder = "asc" | "desc";
 export interface GetDomainsParams {
   search?: string;
   status?: DomainStatus | "all";
-  min_score?: number;
-  max_score?: number;
-  reasoning?: ReasoningFilter;
+  // min_score?: number;
+  // max_score?: number;
+  // reasoning?: ReasoningFilter;
   verifikator?: string;
   page?: number;
   limit?: number;

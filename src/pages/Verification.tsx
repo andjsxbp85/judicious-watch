@@ -657,7 +657,7 @@ const Verification: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
+                  {isLoading || (isFetching && localDomains.length === 0) ? (
                     <TableRow>
                       <TableCell colSpan={8} className="text-center py-12">
                         <div className="flex items-center justify-center gap-2">

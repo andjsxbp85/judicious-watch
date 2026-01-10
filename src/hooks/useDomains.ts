@@ -128,7 +128,7 @@ export function useDomains(params: UseDomainsParams = {}): UseDomainsReturn {
     let apiStatus: GetDomainsParams["status"] = undefined;
     if (statusFilter === "judol") apiStatus = "judol";
     else if (statusFilter === "non-judol") apiStatus = "non_judol";
-    else if (statusFilter === "not-verified") apiStatus = "not_verified";
+    else if (statusFilter === "manual-check") apiStatus = "manual_check";
 
     // Map frontend reasoning filter to API reasoning
     let apiReasoning: GetDomainsParams["reasoning"] = undefined;

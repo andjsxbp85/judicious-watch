@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import DomainDetailModal from "@/components/DomainDetailModal";
 import CrawlKeywordModal from "@/components/CrawlKeywordModal";
@@ -30,6 +30,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,9 +55,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useDomains } from "@/hooks/useDomains";
 import { domainService } from "@/services/domainService";
-import type { FrontendDomain } from "@/types/domainTypes";
-import type { GetDomainsParams, SortBy, SortOrder } from "@/types/domainTypes";
+import type { FrontendDomain, SortBy } from "@/types/domainTypes";
 
 type DomainStatus = FrontendDomain["status"];
 
@@ -94,26 +95,9 @@ const Verification: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  // Data state
-  const [domains, setDomains] = useState<FrontendDomain[]>([]);
-  const [totalDomains, setTotalDomains] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Search and filter states
+  // Search and filter states (local to component)
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortColumn, setSortColumn] = useState<SortBy>("domain");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-
-  // Modal states
-  const [selectedDomain, setSelectedDomain] = useState<FrontendDomain | null>(
-    null
-  );
-  const [modalOpen, setModalOpen] = useState(false);
-  const [crawlModalOpen, setCrawlModalOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Temporary filter states (before applying)
   const [tempStatusFilter, setTempStatusFilter] = useState<string>("all");
@@ -127,6 +111,45 @@ const Verification: React.FC = () => {
   const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100]);
   const [reasoningFilter, setReasoningFilter] = useState<string>("all");
 
+  // Use domains hook with React Query caching
+  const {
+    domains,
+    totalDomains,
+    currentPage,
+    totalPages,
+    itemsPerPage,
+    isLoading,
+    isFetching,
+    error,
+    sortColumn,
+    sortOrder,
+    setCurrentPage,
+    setItemsPerPage,
+    handleSort,
+    refetch,
+  } = useDomains({
+    searchQuery: debouncedSearch,
+    statusFilter,
+    scoreRange,
+    reasoningFilter,
+  });
+
+  // Local state for domains (for optimistic updates)
+  const [localDomains, setLocalDomains] = useState<FrontendDomain[]>([]);
+
+  // Sync local domains with fetched domains
+  useEffect(() => {
+    setLocalDomains(domains);
+  }, [domains]);
+
+  // Modal states
+  const [selectedDomain, setSelectedDomain] = useState<FrontendDomain | null>(
+    null
+  );
+  const [modalOpen, setModalOpen] = useState(false);
+  const [crawlModalOpen, setCrawlModalOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
   // Selected rows for bulk action
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
@@ -137,76 +160,13 @@ const Verification: React.FC = () => {
     scoreRange[1] !== 100 ||
     reasoningFilter !== "all";
 
-  // Fetch domains from API
-  const fetchDomains = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Map frontend status filter to API status
-      let apiStatus: GetDomainsParams["status"] = undefined;
-      if (statusFilter === "judol") apiStatus = "judol";
-      else if (statusFilter === "non-judol") apiStatus = "non_judol";
-      else if (statusFilter === "not-verified") apiStatus = "not_verified";
-
-      // Map frontend reasoning filter to API reasoning
-      let apiReasoning: GetDomainsParams["reasoning"] = undefined;
-      if (reasoningFilter === "ada") apiReasoning = "has_reasoning";
-      else if (reasoningFilter === "tidak-ada") apiReasoning = "no_reasoning";
-
-      const params: GetDomainsParams = {
-        search: searchQuery || undefined,
-        status: apiStatus,
-        min_score: scoreRange[0],
-        max_score: scoreRange[1],
-        reasoning: apiReasoning,
-        page: currentPage,
-        limit: itemsPerPage,
-        sort_by: sortColumn,
-        order: sortOrder,
-      };
-
-      const result = await domainService.getDomainsForFrontend(params);
-      setDomains(result.domains);
-      setTotalDomains(result.total);
-    } catch (err) {
-      console.error("Failed to fetch domains:", err);
-      setError(err instanceof Error ? err.message : "Failed to fetch domains");
-      toast({
-        title: "Error",
-        description: "Gagal memuat data domain",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [
-    searchQuery,
-    statusFilter,
-    scoreRange,
-    reasoningFilter,
-    currentPage,
-    itemsPerPage,
-    sortColumn,
-    sortOrder,
-    toast,
-  ]);
-
-  // Fetch domains on mount and when filters change
-  useEffect(() => {
-    fetchDomains();
-  }, [fetchDomains]);
-
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      setCurrentPage(1);
+      setDebouncedSearch(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
-
-  // Calculate pagination
-  const totalPages = Math.ceil(totalDomains / itemsPerPage);
 
   // Apply filters
   const applyFilters = () => {
@@ -238,17 +198,6 @@ const Verification: React.FC = () => {
     setFilterOpen(open);
   };
 
-  // Handle column sorting
-  const handleSort = (column: SortBy) => {
-    if (sortColumn === column) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
-    } else {
-      setSortColumn(column);
-      setSortOrder("asc");
-    }
-    setCurrentPage(1);
-  };
-
   // Get sort icon for column
   const getSortIcon = (column: SortBy) => {
     if (sortColumn !== column) {
@@ -274,7 +223,7 @@ const Verification: React.FC = () => {
     const verifierName = user?.username || "Unknown User";
 
     // Update local state optimistically
-    setDomains((prev) =>
+    setLocalDomains((prev) =>
       prev.map((d) =>
         d.id === domainId
           ? {
@@ -316,15 +265,15 @@ const Verification: React.FC = () => {
       setSelectedRows([]);
     } else {
       // Select all visible domains
-      setSelectedRows(domains.map((d) => d.id));
+      setSelectedRows(localDomains.map((d) => d.id));
     }
   };
 
   // Check if all visible rows are selected
   const isAllSelected =
-    domains.length > 0 && selectedRows.length === domains.length;
+    localDomains.length > 0 && selectedRows.length === localDomains.length;
   const isSomeSelected =
-    selectedRows.length > 0 && selectedRows.length < domains.length;
+    selectedRows.length > 0 && selectedRows.length < localDomains.length;
 
   // LLM processing state
   const [isProcessingLLM, setIsProcessingLLM] = useState(false);
@@ -342,7 +291,7 @@ const Verification: React.FC = () => {
     }
 
     // Get domain names from selected IDs
-    const selectedDomainNames = domains
+    const selectedDomainNames = localDomains
       .filter((d) => selectedRows.includes(d.id))
       .map((d) => d.domain);
 
@@ -383,7 +332,7 @@ const Verification: React.FC = () => {
 
       // Clear selection and refresh data
       setSelectedRows([]);
-      fetchDomains();
+      refetch();
     } catch (err) {
       console.error("Bulk AI reasoning failed:", err);
       toast({
@@ -706,17 +655,41 @@ const Verification: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-12">
-                        <div className="flex items-center justify-center gap-2">
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          <span className="text-muted-foreground">
-                            Memuat data...
-                          </span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  {isFetching ? (
+                    // Skeleton loading rows
+                    Array.from({
+                      length: itemsPerPage > 10 ? 10 : itemsPerPage,
+                    }).map((_, index) => (
+                      <TableRow key={`skeleton-${index}`}>
+                        <TableCell>
+                          <Skeleton className="h-4 w-4" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <Skeleton className="h-4 w-40" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-2 w-16" />
+                            <Skeleton className="h-4 w-8" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Skeleton className="h-14 w-24 rounded" />
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          <Skeleton className="h-4 w-16" />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton className="h-8 w-8 rounded" />
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : error ? (
                     <TableRow>
                       <TableCell
@@ -726,14 +699,14 @@ const Verification: React.FC = () => {
                         {error}
                         <Button
                           variant="link"
-                          onClick={fetchDomains}
+                          onClick={() => refetch()}
                           className="ml-2"
                         >
                           Coba lagi
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ) : domains.length === 0 ? (
+                  ) : localDomains.length === 0 ? (
                     <TableRow>
                       <TableCell
                         colSpan={7}
@@ -743,7 +716,7 @@ const Verification: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    domains.map((domain) => (
+                    localDomains.map((domain) => (
                       <TableRow
                         key={domain.id}
                         id={`domain-row-${domain.id}`}
@@ -793,32 +766,40 @@ const Verification: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <div className="confidence-bar w-16">
-                              <div
-                                className="confidence-fill"
-                                style={{
-                                  width: `${domain.confidenceScore}%`,
-                                  backgroundColor:
+                            {domain.confidenceScore === 0 ? (
+                              <span className="text-sm text-muted-foreground">
+                                N/A
+                              </span>
+                            ) : (
+                              <>
+                                <div className="confidence-bar w-16">
+                                  <div
+                                    className="confidence-fill"
+                                    style={{
+                                      width: `${domain.confidenceScore}%`,
+                                      backgroundColor:
+                                        domain.status === "not-verified"
+                                          ? "hsl(220, 9%, 46%)"
+                                          : domain.status === "judol"
+                                          ? "hsl(0, 84%, 60%)"
+                                          : "hsl(160, 84%, 39%)",
+                                    }}
+                                  />
+                                </div>
+                                <span
+                                  id={`confidence-score-value-${domain.id}`}
+                                  className={`text-sm font-medium ${
                                     domain.status === "not-verified"
-                                      ? "hsl(220, 9%, 46%)"
+                                      ? "text-muted-foreground"
                                       : domain.status === "judol"
-                                      ? "hsl(0, 84%, 60%)"
-                                      : "hsl(160, 84%, 39%)",
-                                }}
-                              />
-                            </div>
-                            <span
-                              id={`confidence-score-value-${domain.id}`}
-                              className={`text-sm font-medium ${
-                                domain.status === "not-verified"
-                                  ? "text-muted-foreground"
-                                  : domain.status === "judol"
-                                  ? "text-red-500"
-                                  : "text-green-500"
-                              }`}
-                            >
-                              {domain.confidenceScore}%
-                            </span>
+                                      ? "text-red-500"
+                                      : "text-green-500"
+                                  }`}
+                                >
+                                  {domain.confidenceScore}%
+                                </span>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
@@ -880,10 +861,7 @@ const Verification: React.FC = () => {
                     </Label>
                     <Select
                       value={itemsPerPage.toString()}
-                      onValueChange={(value) => {
-                        setItemsPerPage(Number(value));
-                        setCurrentPage(1);
-                      }}
+                      onValueChange={(value) => setItemsPerPage(Number(value))}
                     >
                       <SelectTrigger
                         id="items-per-page"
@@ -907,7 +885,9 @@ const Verification: React.FC = () => {
                       id="pagination-prev-button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
                       disabled={currentPage === 1 || isLoading}
                     >
                       <ChevronLeft className="h-4 w-4" />
@@ -950,7 +930,7 @@ const Verification: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        setCurrentPage((p) => Math.min(totalPages, p + 1))
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
                       }
                       disabled={currentPage === totalPages || isLoading}
                     >
@@ -976,7 +956,7 @@ const Verification: React.FC = () => {
       <CrawlKeywordModal
         open={crawlModalOpen}
         onOpenChange={setCrawlModalOpen}
-        onCrawlSuccess={() => fetchDomains()}
+        onCrawlSuccess={() => refetch()}
       />
     </Layout>
   );

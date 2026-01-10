@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,12 +6,38 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { DomainsProvider } from "@/contexts/DomainsContext";
+import { Skeleton } from "@/components/ui/skeleton";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Verification from "./pages/Verification";
 import ServiceLog from "./pages/ServiceLog";
 import UserManagement from "./pages/UserManagement";
 import NotFound from "./pages/NotFound";
+
+// Lazy load Verification page (heavy component)
+const Verification = React.lazy(() => import("./pages/Verification"));
+
+// Loading fallback for lazy-loaded pages
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <div className="flex gap-2">
+        <Skeleton
+          className="h-3 w-3 rounded-full animate-bounce"
+          style={{ animationDelay: "0ms" }}
+        />
+        <Skeleton
+          className="h-3 w-3 rounded-full animate-bounce"
+          style={{ animationDelay: "150ms" }}
+        />
+        <Skeleton
+          className="h-3 w-3 rounded-full animate-bounce"
+          style={{ animationDelay: "300ms" }}
+        />
+      </div>
+      <span className="text-muted-foreground text-sm">Memuat halaman...</span>
+    </div>
+  </div>
+);
 
 const queryClient = new QueryClient();
 
@@ -74,7 +101,9 @@ const AppRoutes = () => {
         path="/verification"
         element={
           <ProtectedRoute>
-            <Verification />
+            <Suspense fallback={<PageLoader />}>
+              <Verification />
+            </Suspense>
           </ProtectedRoute>
         }
       />

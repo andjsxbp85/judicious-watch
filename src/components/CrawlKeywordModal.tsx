@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -25,6 +26,12 @@ import {
 } from "@/components/ui/table";
 import { Plus, Pencil, Trash2, X, Check, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { scrapeService, CrawlEngine } from "@/services/scrapeService";
 
 interface Keyword {
@@ -50,15 +57,12 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
   // Available TLDs
-  const availableTLDs = [
-    ".ac.id",
-    ".go.id",
-    ".or.id",
-    ".sch.id",
-    ".mil.id",
-    ".desa.id",
-  ];
-  const [selectedTLDs, setSelectedTLDs] = useState<string[]>([]); // None selected by default
+  const [tldList, setTldList] = useState<string[]>([]);
+  const [newTld, setNewTld] = useState("");
+  const [isAddingTld, setIsAddingTld] = useState(false);
+  const [editingTldIndex, setEditingTldIndex] = useState<number | null>(null);
+  const [editTldValue, setEditTldValue] = useState("");
+
   const [aiReasoning, setAiReasoning] = useState(true); // Default true untuk auto-inference
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
@@ -69,6 +73,53 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
     null
   );
   const { toast } = useToast();
+
+  const handleAddTld = () => {
+    if (!newTld.trim()) return;
+    // Split by spaces, commas, or semicolons to allow bulk add
+    const newTlds = newTld.trim().split(/[\s,;]+/);
+
+    // Filter out empty strings and duplicates
+    const validTlds = newTlds.filter((t) => t && !tldList.includes(t));
+
+    if (validTlds.length > 0) {
+      setTldList([...tldList, ...validTlds]);
+    }
+    setNewTld("");
+    setIsAddingTld(false);
+  };
+
+  const handleRemoveTld = (indexToRemove: number) => {
+    setTldList(tldList.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleStartEditTld = (index: number, value: string) => {
+    setEditingTldIndex(index);
+    setEditTldValue(value);
+  };
+
+  const handleSaveEditTld = () => {
+    if (editingTldIndex === null) return;
+
+    if (!editTldValue.trim()) {
+      // If empty, maybe delete? Or just cancel? Let's cancel or do nothing.
+      // User behavior for empty tag edit usually means delete or revert.
+      // I'll revert for safety.
+      setEditingTldIndex(null);
+      return;
+    }
+
+    const updatedList = [...tldList];
+    updatedList[editingTldIndex] = editTldValue.trim();
+    setTldList(updatedList);
+    setEditingTldIndex(null);
+    setEditTldValue("");
+  };
+
+  const handleCancelEditTld = () => {
+    setEditingTldIndex(null);
+    setEditTldValue("");
+  };
 
   // Fetch keywords from database when modal opens
   useEffect(() => {
@@ -227,11 +278,6 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   };
 
   // Toggle TLD selection
-  const toggleTLD = (tld: string) => {
-    setSelectedTLDs((prev) =>
-      prev.includes(tld) ? prev.filter((t) => t !== tld) : [...prev, tld]
-    );
-  };
 
   const handleStartCrawl = async () => {
     if (keywords.length === 0) {
@@ -253,7 +299,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
         keywords: keywordStrings,
         crawl_engine: searchEngine,
         ai_reasoning: true, // Always true as per backend default
-        tld_whitelist: selectedTLDs.join("; "), // Join array to string
+        tld_whitelist: tldList.join("; "),
       });
 
       console.log("Crawl result:", result);
@@ -421,30 +467,116 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
           )}
         </div>
 
-        {/* TLD Whitelist Toggle Buttons */}
+        {/* TLD Whitelist Section */}
         <div id="tld-whitelist-section" className="flex-shrink-0 mb-4">
           <label className="block text-sm font-medium mb-2">
-            Pilih domain yang diizinkan
+            Whitelist Domain
           </label>
-          <div className="flex flex-wrap gap-4">
-            {availableTLDs.map((tld) => (
-              <Button
-                key={tld}
-                type="button"
-                variant={selectedTLDs.includes(tld) ? "default" : "outline"}
-                size="sm"
-                onClick={() => toggleTLD(tld)}
-                disabled={isLoading}
-                className={`transition-all ${
-                  selectedTLDs.includes(tld)
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "hover:bg-accent hover:text-accent-foreground"
-                }`}
+
+          <div className="flex flex-wrap gap-2 mb-2">
+            {tldList.map((tld, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm transition-colors hover:bg-secondary/80"
               >
-                {tld}
-              </Button>
+                {editingTldIndex === index ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      value={editTldValue}
+                      onChange={(e) => setEditTldValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleSaveEditTld();
+                        if (e.key === "Escape") handleCancelEditTld();
+                      }}
+                      className="h-6 w-24 text-xs px-1"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveEditTld}
+                      className="text-green-600 hover:text-green-700"
+                    >
+                      <Check className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={handleCancelEditTld}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span
+                            onClick={() => handleStartEditTld(index, tld)}
+                            className="cursor-pointer hover:underline font-medium"
+                          >
+                            {tld}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Click to edit</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <button
+                      onClick={() => handleRemoveTld(index)}
+                      className="ml-1 text-muted-foreground hover:text-red-500 transition-colors"
+                      title="Remove"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </>
+                )}
+              </div>
             ))}
           </div>
+
+          {!isAddingTld ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAddingTld(true)}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Domain
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: .ac.id .go.id .sch.id"
+                value={newTld}
+                onChange={(e) => setNewTld(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddTld();
+                  if (e.key === "Escape") {
+                    setIsAddingTld(false);
+                    setNewTld("");
+                  }
+                }}
+                autoFocus
+                className="max-w-[200px]"
+              />
+              <Button size="icon" onClick={handleAddTld} type="button">
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => {
+                  setIsAddingTld(false);
+                  setNewTld("");
+                }}
+                type="button"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
         <div

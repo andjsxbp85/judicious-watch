@@ -8,6 +8,7 @@ export interface ScrapeMultiKeywordRequest {
   keywords: string[];
   crawl_engine: CrawlEngine;
   ai_reasoning: boolean;
+  tld_whitelist: string;
 }
 
 export interface KeywordResult {

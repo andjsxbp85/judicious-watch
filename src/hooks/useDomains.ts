@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { domainService } from "@/services/domainService";
 import type {
   GetDomainsParams,
@@ -194,16 +194,36 @@ export function useDomains(params: UseDomainsParams = {}): UseDomainsReturn {
     refetchOnWindowFocus: false,
   });
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [
+  // Track previous filter values to detect changes
+  const prevFiltersRef = useRef({
     searchQuery,
     statusFilter,
-    scoreRange[0],
-    scoreRange[1],
+    scoreMin: scoreRange[0],
+    scoreMax: scoreRange[1],
     reasoningFilter,
-  ]);
+  });
+
+  // Reset to page 1 when filters change (avoiding infinite loop)
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    const filtersChanged =
+      prev.searchQuery !== searchQuery ||
+      prev.statusFilter !== statusFilter ||
+      prev.scoreMin !== scoreRange[0] ||
+      prev.scoreMax !== scoreRange[1] ||
+      prev.reasoningFilter !== reasoningFilter;
+
+    if (filtersChanged) {
+      setCurrentPage(1);
+      prevFiltersRef.current = {
+        searchQuery,
+        statusFilter,
+        scoreMin: scoreRange[0],
+        scoreMax: scoreRange[1],
+        reasoningFilter,
+      };
+    }
+  }, [searchQuery, statusFilter, scoreRange, reasoningFilter]);
 
   // Calculate derived values
   const domains = data?.domains ?? [];

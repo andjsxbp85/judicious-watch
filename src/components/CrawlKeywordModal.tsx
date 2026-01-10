@@ -49,6 +49,16 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
+  // Available TLDs
+  const availableTLDs = [
+    ".ac.id",
+    ".go.id",
+    ".or.id",
+    ".sch.id",
+    ".mil.id",
+    ".desa.id",
+  ];
+  const [selectedTLDs, setSelectedTLDs] = useState<string[]>([]); // None selected by default
   const [aiReasoning, setAiReasoning] = useState(true); // Default true untuk auto-inference
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
@@ -216,6 +226,13 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
     setIsAdding(false);
   };
 
+  // Toggle TLD selection
+  const toggleTLD = (tld: string) => {
+    setSelectedTLDs((prev) =>
+      prev.includes(tld) ? prev.filter((t) => t !== tld) : [...prev, tld]
+    );
+  };
+
   const handleStartCrawl = async () => {
     if (keywords.length === 0) {
       toast({
@@ -229,12 +246,14 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
     setIsLoading(true);
 
     try {
+      // Get all keyword strings
       const keywordStrings = keywords.map((k) => k.keyword);
 
       const result = await scrapeService.scrapeMultiKeyword({
         keywords: keywordStrings,
         crawl_engine: searchEngine,
-        ai_reasoning: aiReasoning,
+        ai_reasoning: true, // Always true as per backend default
+        tld_whitelist: selectedTLDs.join("; "), // Join array to string
       });
 
       console.log("Crawl result:", result);
@@ -400,6 +419,32 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
               </Button>
             </div>
           )}
+        </div>
+
+        {/* TLD Whitelist Toggle Buttons */}
+        <div id="tld-whitelist-section" className="flex-shrink-0 mb-4">
+          <label className="block text-sm font-medium mb-2">
+            Pilih domain yang diizinkan
+          </label>
+          <div className="flex flex-wrap gap-4">
+            {availableTLDs.map((tld) => (
+              <Button
+                key={tld}
+                type="button"
+                variant={selectedTLDs.includes(tld) ? "default" : "outline"}
+                size="sm"
+                onClick={() => toggleTLD(tld)}
+                disabled={isLoading}
+                className={`transition-all ${
+                  selectedTLDs.includes(tld)
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "hover:bg-accent hover:text-accent-foreground"
+                }`}
+              >
+                {tld}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <div

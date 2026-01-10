@@ -138,13 +138,8 @@ const Verification: React.FC = () => {
     reasoningFilter,
   });
 
-  // Local state for domains (for optimistic updates)
-  const [localDomains, setLocalDomains] = useState<FrontendDomain[]>([]);
-
-  // Sync local domains with fetched domains
-  useEffect(() => {
-    setLocalDomains(domains);
-  }, [domains]);
+  // Use domains directly from the hook instead of local state to avoid infinite loop
+  const localDomains = domains;
 
   // Modal states
   const [selectedDomain, setSelectedDomain] = useState<FrontendDomain | null>(
@@ -229,18 +224,6 @@ const Verification: React.FC = () => {
   ) => {
     const verifierName = user?.username || "Unknown User";
 
-    // Update local state optimistically
-    setLocalDomains((prev) =>
-      prev.map((d) =>
-        d.id === domainId
-          ? {
-              ...d,
-              status,
-            }
-          : d
-      )
-    );
-
     // Update selectedDomain if it's the one being verified
     if (selectedDomain?.id === domainId) {
       setSelectedDomain((prev) =>
@@ -254,6 +237,7 @@ const Verification: React.FC = () => {
     }
 
     // TODO: Call API to persist verification
+    // After API call, use refetch() to update the list
   };
 
   // Toggle row selection
@@ -502,7 +486,7 @@ const Verification: React.FC = () => {
                       </Select>
                     </div>
 
-                    {/* Score Range Filter */}
+                    {/* Score Range Filter - HIDDEN
                     <div id="filter-score-section" className="space-y-3">
                       <div className="flex items-center justify-between">
                         <Label
@@ -537,6 +521,7 @@ const Verification: React.FC = () => {
                         <span id="filter-score-max-label">100</span>
                       </div>
                     </div>
+                    */}
 
                     {/* Apply Filter Button */}
                     <Button

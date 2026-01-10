@@ -787,7 +787,10 @@ const Verification: React.FC = () => {
                                   : "text-green-500"
                               }`}
                             >
-                              {domain.confidenceScore}%
+                              {domain.status === "manual-check" &&
+                              domain.confidenceScore === 0
+                                ? "N/A"
+                                : `${domain.confidenceScore}%`}
                             </span>
                           </div>
                         </TableCell>

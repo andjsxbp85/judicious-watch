@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Layout from "@/components/Layout";
 import DomainDetailModal from "@/components/DomainDetailModal";
 import CrawlKeywordModal from "@/components/CrawlKeywordModal";
@@ -57,7 +57,11 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useDomains } from "@/hooks/useDomains";
 import { domainService } from "@/services/domainService";
-import type { FrontendDomain, SortBy } from "@/types/domainTypes";
+import type {
+  FrontendDomain,
+  GetDomainsParams,
+  SortBy,
+} from "@/types/domainTypes";
 
 type DomainStatus = FrontendDomain["status"];
 
@@ -79,7 +83,7 @@ const getStatusLabel = (status: DomainStatus) => {
     case "non-judol":
       return "Non Judol";
     default:
-      return "Not Verified";
+      return "Manual Check";
   }
 };
 
@@ -160,6 +164,9 @@ const Verification: React.FC = () => {
     scoreRange[1] !== 100 ||
     reasoningFilter !== "all";
 
+  // Track failed screenshot images to prevent flickering
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -217,7 +224,7 @@ const Verification: React.FC = () => {
 
   const handleVerify = (
     domainId: string,
-    status: "not-verified" | "judol" | "non-judol",
+    status: "manual-check" | "judol" | "non-judol",
     reasoning?: string
   ) => {
     const verifierName = user?.username || "Unknown User";
@@ -456,7 +463,7 @@ const Verification: React.FC = () => {
                             setTempScoreRange([90, 100]);
                           } else if (value === "non-judol") {
                             setTempScoreRange([0, 60]);
-                          } else if (value === "not-verified") {
+                          } else if (value === "manual-check") {
                             setTempScoreRange([60, 80]);
                           } else {
                             setTempScoreRange([0, 100]);
@@ -486,10 +493,10 @@ const Verification: React.FC = () => {
                             Non Judol
                           </SelectItem>
                           <SelectItem
-                            id="status-filter-not-verified"
-                            value="not-verified"
+                            id="status-filter-manual-check"
+                            value="manual-check"
                           >
-                            Not Verified
+                            Manual Check
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -612,6 +619,16 @@ const Verification: React.FC = () => {
                       />
                     </TableHead>
                     <TableHead
+                      id="table-header-timestamp"
+                      className="w-[150px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
+                      onClick={() => handleSort("timestamp")}
+                    >
+                      <div className="flex items-center">
+                        Timestamp
+                        {getSortIcon("timestamp")}
+                      </div>
+                    </TableHead>
+                    <TableHead
                       id="table-header-domain"
                       className="w-[300px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
                       onClick={() => handleSort("domain")}
@@ -655,45 +672,21 @@ const Verification: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isFetching ? (
-                    // Skeleton loading rows
-                    Array.from({
-                      length: itemsPerPage > 10 ? 10 : itemsPerPage,
-                    }).map((_, index) => (
-                      <TableRow key={`skeleton-${index}`}>
-                        <TableCell>
-                          <Skeleton className="h-4 w-4" />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <Skeleton className="h-4 w-40" />
-                            <Skeleton className="h-3 w-32" />
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-6 w-20 rounded-full" />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Skeleton className="h-2 w-16" />
-                            <Skeleton className="h-4 w-8" />
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Skeleton className="h-14 w-24 rounded" />
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                          <Skeleton className="h-4 w-16" />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className="h-8 w-8 rounded" />
-                        </TableCell>
-                      </TableRow>
-                    ))
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-12">
+                        <div className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          <span className="text-muted-foreground">
+                            Memuat data...
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ) : error ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={8}
                         className="text-center py-12 text-destructive"
                       >
                         {error}
@@ -709,7 +702,7 @@ const Verification: React.FC = () => {
                   ) : localDomains.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={7}
+                        colSpan={8}
                         className="text-center py-12 text-muted-foreground"
                       >
                         Tidak ada domain yang ditemukan
@@ -732,6 +725,25 @@ const Verification: React.FC = () => {
                               toggleRowSelection(domain.id)
                             }
                           />
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            id={`domain-timestamp-${domain.id}`}
+                            className="text-xs text-muted-foreground whitespace-nowrap"
+                          >
+                            {domain.timestamp
+                              ? new Date(domain.timestamp).toLocaleDateString(
+                                  "id-ID",
+                                  {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )
+                              : "-"}
+                          </span>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
@@ -766,51 +778,53 @@ const Verification: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            {domain.confidenceScore === 0 ? (
-                              <span className="text-sm text-muted-foreground">
-                                N/A
-                              </span>
-                            ) : (
-                              <>
-                                <div className="confidence-bar w-16">
-                                  <div
-                                    className="confidence-fill"
-                                    style={{
-                                      width: `${domain.confidenceScore}%`,
-                                      backgroundColor:
-                                        domain.status === "not-verified"
-                                          ? "hsl(220, 9%, 46%)"
-                                          : domain.status === "judol"
-                                          ? "hsl(0, 84%, 60%)"
-                                          : "hsl(160, 84%, 39%)",
-                                    }}
-                                  />
-                                </div>
-                                <span
-                                  id={`confidence-score-value-${domain.id}`}
-                                  className={`text-sm font-medium ${
-                                    domain.status === "not-verified"
-                                      ? "text-muted-foreground"
+                            <div className="confidence-bar w-16">
+                              <div
+                                className="confidence-fill"
+                                style={{
+                                  width: `${domain.confidenceScore}%`,
+                                  backgroundColor:
+                                    domain.status === "manual-check"
+                                      ? "hsl(220, 9%, 46%)"
                                       : domain.status === "judol"
-                                      ? "text-red-500"
-                                      : "text-green-500"
-                                  }`}
-                                >
-                                  {domain.confidenceScore}%
-                                </span>
-                              </>
-                            )}
+                                      ? "hsl(0, 84%, 60%)"
+                                      : "hsl(160, 84%, 39%)",
+                                }}
+                              />
+                            </div>
+                            <span
+                              id={`confidence-score-value-${domain.id}`}
+                              className={`text-sm font-medium ${
+                                domain.status === "manual-check"
+                                  ? "text-muted-foreground"
+                                  : domain.status === "judol"
+                                  ? "text-red-500"
+                                  : "text-green-500"
+                              }`}
+                            >
+                              {domain.confidenceScore}%
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <img
                             id={`domain-screenshot-${domain.id}`}
-                            src={domain.screenshot}
+                            src={
+                              failedImages.has(domain.id)
+                                ? "/screenshots/placeholder.png"
+                                : domain.screenshot
+                            }
                             alt={domain.domain}
-                            className="w-24 h-14 object-cover rounded border border-border"
+                            className="w-24 h-14 object-cover rounded border border-border bg-muted"
+                            loading="lazy"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src =
-                                "/screenshots/placeholder.png";
+                              if (!failedImages.has(domain.id)) {
+                                setFailedImages((prev) =>
+                                  new Set(prev).add(domain.id)
+                                );
+                                (e.target as HTMLImageElement).src =
+                                  "/screenshots/placeholder.png";
+                              }
                             }}
                           />
                         </TableCell>

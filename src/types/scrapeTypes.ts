@@ -10,8 +10,23 @@ export interface ScrapeMultiKeywordRequest {
   ai_reasoning: boolean;
 }
 
+export interface KeywordResult {
+  keyword: string;
+  success: boolean;
+  total_fetched?: number;
+  total_saved?: number;
+  inference_triggered?: number | string;
+  message?: string;
+}
+
 export interface ScrapeMultiKeywordResponse {
-  [key: string]: unknown;
+  success: boolean;
+  message: string;
+  total_keywords: number;
+  engine: string;
+  ai_reasoning: boolean;
+  ocr_reasoning: boolean;
+  results: KeywordResult[];
 }
 
 export interface KeywordItem {

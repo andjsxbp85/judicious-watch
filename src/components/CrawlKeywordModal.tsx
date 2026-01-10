@@ -49,7 +49,7 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
-  const [aiReasoning, setAiReasoning] = useState(false);
+  const [aiReasoning, setAiReasoning] = useState(true); // Default true untuk auto-inference
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
   // Loading states untuk prevent double-click
@@ -239,9 +239,31 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
 
       console.log("Crawl result:", result);
 
+      // Hitung total inference yang berhasil
+      const totalInferenceTriggered =
+        result.results?.reduce((acc: number, r: any) => {
+          const inferenceCount =
+            typeof r.inference_triggered === "number"
+              ? r.inference_triggered
+              : 0;
+          return acc + inferenceCount;
+        }, 0) || 0;
+
+      const totalSaved =
+        result.results?.reduce(
+          (acc: number, r: any) => acc + (r.total_saved || 0),
+          0
+        ) || 0;
+
       toast({
-        title: "Crawl Berhasil",
-        description: `Berhasil melakukan crawl ${keywords.length} keyword dengan ${searchEngine}`,
+        title: "Crawl & Inference Berhasil",
+        description: `${
+          keywords.length
+        } keyword berhasil di-crawl menggunakan ${searchEngine}. Total ${totalSaved} data tersimpan${
+          aiReasoning
+            ? ` dan ${totalInferenceTriggered} inference berhasil dijalankan`
+            : ""
+        }.`,
       });
 
       // Trigger refresh di parent component

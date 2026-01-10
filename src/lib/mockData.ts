@@ -8,7 +8,7 @@ export interface Domain {
   url: string;
   domain: string;
   urlGroup: UrlEntry[]; // All URLs under this domain with their screenshots
-  status: "not-verified" | "judol" | "non-judol";
+  status: "manual-check" | "judol" | "non-judol";
   confidenceScore: number;
   screenshot: string;
   screenshots?: string[]; // Kept for backward compatibility
@@ -48,10 +48,22 @@ export const mockDomains: Domain[] = [
     url: "https://slot-gacor-123.com",
     domain: "slot-gacor-123.com",
     urlGroup: [
-      { url: "https://slot-gacor-123.com", screenshot: "/screenshots/gambling_1.png" },
-      { url: "https://slot-gacor-123.com/play", screenshot: "/screenshots/gambling_2.png" },
-      { url: "https://games.slot-gacor-123.com", screenshot: "/screenshots/gambling_3.png" },
-      { url: "https://berita.slot-gacor-123.com/now", screenshot: "/screenshots/gambling_1.png" },
+      {
+        url: "https://slot-gacor-123.com",
+        screenshot: "/screenshots/gambling_1.png",
+      },
+      {
+        url: "https://slot-gacor-123.com/play",
+        screenshot: "/screenshots/gambling_2.png",
+      },
+      {
+        url: "https://games.slot-gacor-123.com",
+        screenshot: "/screenshots/gambling_3.png",
+      },
+      {
+        url: "https://berita.slot-gacor-123.com/now",
+        screenshot: "/screenshots/gambling_1.png",
+      },
     ],
     status: "judol",
     confidenceScore: 95,
@@ -75,8 +87,16 @@ export const mockDomains: Domain[] = [
     url: "https://berita-teknologi.id",
     domain: "berita-teknologi.id",
     urlGroup: [
-      { url: "https://berita-teknologi.id", screenshot: "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop" },
-      { url: "https://berita-teknologi.id/artikel", screenshot: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop" },
+      {
+        url: "https://berita-teknologi.id",
+        screenshot:
+          "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=600&fit=crop",
+      },
+      {
+        url: "https://berita-teknologi.id/artikel",
+        screenshot:
+          "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&h=600&fit=crop",
+      },
     ],
     status: "non-judol",
     confidenceScore: 98,
@@ -96,11 +116,20 @@ export const mockDomains: Domain[] = [
     url: "https://togel-hk-sgp.net",
     domain: "togel-hk-sgp.net",
     urlGroup: [
-      { url: "https://togel-hk-sgp.net", screenshot: "/screenshots/gambling_2.png" },
-      { url: "https://togel-hk-sgp.net/result", screenshot: "/screenshots/gambling_3.png" },
-      { url: "https://togel-hk-sgp.net/prediksi", screenshot: "/screenshots/gambling_1.png" },
+      {
+        url: "https://togel-hk-sgp.net",
+        screenshot: "/screenshots/gambling_2.png",
+      },
+      {
+        url: "https://togel-hk-sgp.net/result",
+        screenshot: "/screenshots/gambling_3.png",
+      },
+      {
+        url: "https://togel-hk-sgp.net/prediksi",
+        screenshot: "/screenshots/gambling_1.png",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 92,
     screenshot: "/screenshots/gambling_2.png",
     extractedContent:
@@ -117,10 +146,16 @@ export const mockDomains: Domain[] = [
     url: "https://university-indonesia.ac.id",
     domain: "university-indonesia.ac.id",
     urlGroup: [
-      { url: "https://university-indonesia.ac.id", screenshot: "/screenshots/university_1.png" },
-      { url: "https://university-indonesia.ac.id/pendaftaran", screenshot: "/screenshots/university_2.png" },
+      {
+        url: "https://university-indonesia.ac.id",
+        screenshot: "/screenshots/university_1.png",
+      },
+      {
+        url: "https://university-indonesia.ac.id/pendaftaran",
+        screenshot: "/screenshots/university_2.png",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 99,
     screenshot: "/screenshots/university_1.png",
     screenshots: [
@@ -141,11 +176,20 @@ export const mockDomains: Domain[] = [
     url: "https://casino-online-vip.xyz",
     domain: "casino-online-vip.xyz",
     urlGroup: [
-      { url: "https://casino-online-vip.xyz", screenshot: "/screenshots/gambling_1.png" },
-      { url: "https://casino-online-vip.xyz/live", screenshot: "/screenshots/gambling_2.png" },
-      { url: "https://casino-online-vip.xyz/promo", screenshot: "/screenshots/gambling_3.png" },
+      {
+        url: "https://casino-online-vip.xyz",
+        screenshot: "/screenshots/gambling_1.png",
+      },
+      {
+        url: "https://casino-online-vip.xyz/live",
+        screenshot: "/screenshots/gambling_2.png",
+      },
+      {
+        url: "https://casino-online-vip.xyz/promo",
+        screenshot: "/screenshots/gambling_3.png",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 97,
     screenshot: "/screenshots/gambling_1.png",
     extractedContent:
@@ -162,9 +206,13 @@ export const mockDomains: Domain[] = [
     url: "https://toko-online-fashion.com",
     domain: "toko-online-fashion.com",
     urlGroup: [
-      { url: "https://toko-online-fashion.com", screenshot: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop" },
+      {
+        url: "https://toko-online-fashion.com",
+        screenshot:
+          "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 96,
     screenshot:
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop",
@@ -182,10 +230,16 @@ export const mockDomains: Domain[] = [
     url: "https://poker-domino-qq.net",
     domain: "poker-domino-qq.net",
     urlGroup: [
-      { url: "https://poker-domino-qq.net", screenshot: "/screenshots/gambling_3.png" },
-      { url: "https://poker-domino-qq.net/daftar", screenshot: "/screenshots/gambling_1.png" },
+      {
+        url: "https://poker-domino-qq.net",
+        screenshot: "/screenshots/gambling_3.png",
+      },
+      {
+        url: "https://poker-domino-qq.net/daftar",
+        screenshot: "/screenshots/gambling_1.png",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 94,
     screenshot: "/screenshots/gambling_3.png",
     extractedContent:
@@ -202,9 +256,13 @@ export const mockDomains: Domain[] = [
     url: "https://resep-masakan-indo.com",
     domain: "resep-masakan-indo.com",
     urlGroup: [
-      { url: "https://resep-masakan-indo.com", screenshot: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop" },
+      {
+        url: "https://resep-masakan-indo.com",
+        screenshot:
+          "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 99,
     screenshot:
       "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop",
@@ -222,11 +280,20 @@ export const mockDomains: Domain[] = [
     url: "https://sportbook-888.co",
     domain: "sportbook-888.co",
     urlGroup: [
-      { url: "https://sportbook-888.co", screenshot: "/screenshots/gambling_2.png" },
-      { url: "https://sportbook-888.co/bola", screenshot: "/screenshots/gambling_1.png" },
-      { url: "https://sportbook-888.co/live", screenshot: "/screenshots/gambling_3.png" },
+      {
+        url: "https://sportbook-888.co",
+        screenshot: "/screenshots/gambling_2.png",
+      },
+      {
+        url: "https://sportbook-888.co/bola",
+        screenshot: "/screenshots/gambling_1.png",
+      },
+      {
+        url: "https://sportbook-888.co/live",
+        screenshot: "/screenshots/gambling_3.png",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 91,
     screenshot: "/screenshots/gambling_2.png",
     extractedContent:
@@ -243,9 +310,13 @@ export const mockDomains: Domain[] = [
     url: "https://kesehatan-keluarga.id",
     domain: "kesehatan-keluarga.id",
     urlGroup: [
-      { url: "https://kesehatan-keluarga.id", screenshot: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop" },
+      {
+        url: "https://kesehatan-keluarga.id",
+        screenshot:
+          "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop",
+      },
     ],
-    status: "not-verified",
+    status: "manual-check",
     confidenceScore: 98,
     screenshot:
       "https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=800&h=600&fit=crop",
@@ -318,17 +389,19 @@ export const mockVerifikatorStats: VerifikatorStats[] = [
 export const getStatistics = (domains: Domain[] = mockDomains) => {
   // Total domains (unique main domains)
   const totalDomains = domains.length;
-  
+
   // Total URLs (sum of all URLs in urlGroup for each domain)
   const totalUrls = domains.reduce((sum, d) => {
     return sum + (d.urlGroup?.length || 1);
   }, 0);
-  
+
   // Count by status
   const judolCount = domains.filter((d) => d.status === "judol").length;
   const nonJudolCount = domains.filter((d) => d.status === "non-judol").length;
-  const notVerifiedCount = domains.filter((d) => d.status === "not-verified").length;
-  
+  const notVerifiedCount = domains.filter(
+    (d) => d.status === "manual-check"
+  ).length;
+
   // Today's verifications
   const todayVerified = domains.filter((d) => {
     if (!d.verifiedAt) return false;

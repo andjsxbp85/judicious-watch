@@ -2,7 +2,11 @@
 // DOMAIN API TYPES
 // ============================================
 
-export type DomainStatus = "not_verified" | "judol" | "non_judol";
+export type DomainStatus =
+  | "not_verified"
+  | "judol"
+  | "non_judol"
+  | "manual_check";
 export type ReasoningFilter = "all" | "has_reasoning" | "no_reasoning";
 export type SortBy = "domain" | "score" | "timestamp";
 export type SortOrder = "asc" | "desc";
@@ -30,6 +34,7 @@ export interface DomainItem {
   confidenceScore: number[];
   screenshot: (string | null)[];
   verifiedBy: (string | null)[];
+  timestamp: string[];
 }
 
 // API Response for GET /api/data/domains
@@ -60,14 +65,16 @@ export interface FrontendDomain {
   domain: string;
   url: string; // First URL for display
   urls: string[]; // All URLs
-  status: "not-verified" | "judol" | "non-judol"; // First status for display
-  statuses: ("not-verified" | "judol" | "non-judol")[]; // All statuses
+  status: "manual-check" | "judol" | "non-judol"; // First status for display
+  statuses: ("manual-check" | "judol" | "non-judol")[]; // All statuses
   confidenceScore: number; // First score for display
   confidenceScores: number[]; // All scores
   screenshot: string; // First screenshot for display
   screenshots: (string | null)[]; // All screenshots
   verifiedBy: string | null; // First verifier for display
   verifiedBys: (string | null)[]; // All verifiers
+  timestamp: string; // First timestamp for display
+  timestamps: string[]; // All timestamps
   urlCount: number; // Number of URLs under this domain
 }
 
@@ -102,7 +109,7 @@ export interface FrontendCrawlItem {
   crawl_id: string;
   url: string;
   timestamp: string;
-  status: "not-verified" | "judol" | "non-judol";
+  status: "manual-check" | "judol" | "non-judol";
   confidenceScore: number;
   reasoning: string;
   innerText: string;

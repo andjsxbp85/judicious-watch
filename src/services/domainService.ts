@@ -47,9 +47,11 @@ function mapCrawlStatus(status: DomainStatus): FrontendCrawlItem["status"] {
       return "judol";
     case "non_judol":
       return "non-judol";
+    case "manual_check":
+      return "manual-check";
     case "not_verified":
     default:
-      return "not-verified";
+      return "manual-check";
   }
 }
 
@@ -121,9 +123,11 @@ function mapSingleStatus(status: DomainStatus): FrontendDomain["status"] {
       return "judol";
     case "non_judol":
       return "non-judol";
+    case "manual_check":
+      return "manual-check";
     case "not_verified":
     default:
-      return "not-verified";
+      return "manual-check";
   }
 }
 
@@ -137,7 +141,7 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
   const firstStatus =
     Array.isArray(item.status) && item.status.length > 0
       ? item.status[0]
-      : ("not_verified" as DomainStatus);
+      : ("manual_check" as DomainStatus);
   const firstScore =
     Array.isArray(item.confidenceScore) && item.confidenceScore.length > 0
       ? item.confidenceScore[0]
@@ -150,11 +154,15 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
     Array.isArray(item.verifiedBy) && item.verifiedBy.length > 0
       ? item.verifiedBy[0]
       : null;
+  const firstTimestamp =
+    Array.isArray(item.timestamp) && item.timestamp.length > 0
+      ? item.timestamp[0]
+      : "";
 
   // Map all statuses to frontend format
   const statuses = Array.isArray(item.status)
     ? item.status.map(mapSingleStatus)
-    : ["not-verified" as const];
+    : ["manual-check" as const];
 
   return {
     id: item.id,
@@ -169,6 +177,8 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
     screenshots: item.screenshot || [],
     verifiedBy: firstVerifiedBy,
     verifiedBys: item.verifiedBy || [],
+    timestamp: firstTimestamp,
+    timestamps: item.timestamp || [],
     urlCount: item.url?.length || 0,
   };
 }

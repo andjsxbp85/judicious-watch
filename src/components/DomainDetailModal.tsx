@@ -43,7 +43,7 @@ import type {
   FrontendCrawlItem,
 } from "@/types/domainTypes";
 
-type DomainStatus = "not-verified" | "judol" | "non-judol";
+type DomainStatus = "manual-check" | "judol" | "non-judol";
 
 interface DomainDetailModalProps {
   domainId: string | null;
@@ -82,7 +82,7 @@ const getStatusLabel = (status: DomainStatus) => {
     case "non-judol":
       return "Non Judi Online";
     default:
-      return "Not Verified";
+      return "Manual Check";
   }
 };
 
@@ -101,7 +101,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
   // Form state
   const [currentStatus, setCurrentStatus] =
-    useState<DomainStatus>("not-verified");
+    useState<DomainStatus>("manual-check");
   const [reasoning, setReasoning] = useState<string>("");
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedCrawlIndex, setSelectedCrawlIndex] = useState(0);
@@ -153,14 +153,14 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   // Convert frontend status to API status format
   const toApiStatus = (
     status: DomainStatus
-  ): "judol" | "non_judol" | "not_verified" => {
+  ): "judol" | "non_judol" | "manual_check" => {
     switch (status) {
       case "judol":
         return "judol";
       case "non-judol":
         return "non_judol";
       default:
-        return "not_verified";
+        return "manual_check";
     }
   };
 
@@ -170,7 +170,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
     setCurrentStatus(newStatus);
     // Mark as having changes so Save button becomes enabled
-    const originalStatus = currentCrawl?.status || "not-verified";
+    const originalStatus = currentCrawl?.status || "manual-check";
     setHasChanges(
       newStatus !== originalStatus ||
         reasoning !== (currentCrawl?.reasoning || "")
@@ -180,7 +180,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   const handleReasoningChange = (value: string) => {
     setReasoning(value);
     const originalReasoning = currentCrawl?.reasoning || "";
-    const originalStatus = currentCrawl?.status || "not-verified";
+    const originalStatus = currentCrawl?.status || "manual-check";
     setHasChanges(
       value !== originalReasoning || currentStatus !== originalStatus
     );
@@ -374,16 +374,16 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                   className="z-[100]"
                 >
                   <DropdownMenuItem
-                    id="status-option-not-verified"
-                    onClick={() => handleStatusChange("not-verified")}
+                    id="status-option-manual-check"
+                    onClick={() => handleStatusChange("manual-check")}
                     className={
-                      currentStatus === "not-verified" ? "bg-muted" : ""
+                      currentStatus === "manual-check" ? "bg-muted" : ""
                     }
                   >
                     <Badge className="bg-muted text-muted-foreground mr-2">
-                      Not Verified
+                      Manual Check
                     </Badge>
-                    {currentStatus === "not-verified" && "✓"}
+                    {currentStatus === "manual-check" && "✓"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     id="status-option-judol"

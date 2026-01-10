@@ -57,6 +57,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useDomains } from "@/hooks/useDomains";
 import { domainService } from "@/services/domainService";
+import { cn } from "@/lib/utils";
 import type {
   FrontendDomain,
   GetDomainsParams,
@@ -200,11 +201,19 @@ const Verification: React.FC = () => {
     setFilterOpen(open);
   };
 
-  // Get sort icon for column
+  // Get sort icon for column with loading indicator
   const getSortIcon = (column: SortBy) => {
-    if (sortColumn !== column) {
+    const isActiveColumn = sortColumn === column;
+    const isLoadingThisColumn = isFetching && isActiveColumn;
+
+    if (isLoadingThisColumn) {
+      return <Loader2 className="h-4 w-4 ml-1 animate-spin" />;
+    }
+
+    if (!isActiveColumn) {
       return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />;
     }
+
     return sortOrder === "asc" ? (
       <ArrowUp className="h-4 w-4 ml-1" />
     ) : (
@@ -605,7 +614,10 @@ const Verification: React.FC = () => {
                     </TableHead>
                     <TableHead
                       id="table-header-timestamp"
-                      className="w-[150px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
+                      className={cn(
+                        "w-[150px] cursor-pointer select-none hover:bg-muted/80 transition-colors",
+                        isFetching && sortColumn === "timestamp" && "opacity-70"
+                      )}
                       onClick={() => handleSort("timestamp")}
                     >
                       <div className="flex items-center">
@@ -615,7 +627,10 @@ const Verification: React.FC = () => {
                     </TableHead>
                     <TableHead
                       id="table-header-domain"
-                      className="w-[300px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
+                      className={cn(
+                        "w-[300px] cursor-pointer select-none hover:bg-muted/80 transition-colors",
+                        isFetching && sortColumn === "domain" && "opacity-70"
+                      )}
                       onClick={() => handleSort("domain")}
                     >
                       <div className="flex items-center">
@@ -628,7 +643,10 @@ const Verification: React.FC = () => {
                     </TableHead>
                     <TableHead
                       id="table-header-score"
-                      className="w-[120px] cursor-pointer select-none hover:bg-muted/80 transition-colors"
+                      className={cn(
+                        "w-[120px] cursor-pointer select-none hover:bg-muted/80 transition-colors",
+                        isFetching && sortColumn === "score" && "opacity-70"
+                      )}
                       onClick={() => handleSort("score")}
                     >
                       <div className="flex items-center">

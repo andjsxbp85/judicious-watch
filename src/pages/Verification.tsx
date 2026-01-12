@@ -785,7 +785,7 @@ const Verification: React.FC = () => {
                               <div
                                 className="confidence-fill"
                                 style={{
-                                  width: `${domain.confidenceScore}%`,
+                                  width: `${domain.finalScore}%`,
                                   backgroundColor:
                                     domain.status === "manual-check"
                                       ? "hsl(220, 9%, 46%)"
@@ -806,9 +806,9 @@ const Verification: React.FC = () => {
                               }`}
                             >
                               {domain.status === "manual-check" &&
-                              domain.confidenceScore === 0
+                              domain.finalScore === 0
                                 ? "N/A"
-                                : `${domain.confidenceScore}%`}
+                                : `${domain.finalScore}%`}
                             </span>
                           </div>
                         </TableCell>

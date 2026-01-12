@@ -35,6 +35,8 @@ export interface DomainItem {
   screenshot: (string | null)[];
   verifiedBy: (string | null)[];
   timestamp: string[];
+  finalScore: number;
+  vit_score: number | null;
 }
 
 // API Response for GET /api/data/domains
@@ -67,6 +69,7 @@ export interface FrontendDomain {
   urls: string[]; // All URLs
   status: "manual-check" | "judol" | "non-judol"; // First status for display
   statuses: ("manual-check" | "judol" | "non-judol")[]; // All statuses
+  finalScore: number; // Final score for the domain
   confidenceScore: number; // First score for display
   confidenceScores: number[]; // All scores
   screenshot: string; // First screenshot for display
@@ -76,6 +79,7 @@ export interface FrontendDomain {
   timestamp: string; // First timestamp for display
   timestamps: string[]; // All timestamps
   urlCount: number; // Number of URLs under this domain
+  vit_score: number | null; // VIT score for the domain
 }
 
 // ============================================
@@ -84,7 +88,6 @@ export interface FrontendDomain {
 
 // Single crawl history item from domain detail API
 export interface CrawlHistoryItem {
-  vit_score: number;
   crawl_id: string;
   url: string;
   timestamp: string;
@@ -95,6 +98,7 @@ export interface CrawlHistoryItem {
   screenshot: string | null;
   is_amp: boolean;
   keyword: string | null;
+  vit_score: number | null;
 }
 
 // API Response for GET /api/data/domains/{domain_id}
@@ -115,7 +119,7 @@ export interface FrontendCrawlItem {
   reasoning: string;
   innerText: string;
   screenshot: string;
-  vitScore: number;
+  vitScore: number | null;
   isAmp: boolean;
   keyword: string | null;
 }

@@ -147,6 +147,7 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
     Array.isArray(item.confidenceScore) && item.confidenceScore.length > 0
       ? item.confidenceScore[0]
       : 0;
+  const finalScore = item.finalScore ?? 0;
   const firstScreenshot =
     Array.isArray(item.screenshot) && item.screenshot.length > 0
       ? item.screenshot[0]
@@ -174,6 +175,7 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
     statuses,
     confidenceScore: firstScore,
     confidenceScores: item.confidenceScore || [],
+    finalScore,
     screenshot: formatScreenshot(firstScreenshot),
     screenshots: item.screenshot || [],
     verifiedBy: firstVerifiedBy,
@@ -181,6 +183,7 @@ export function mapDomainToFrontend(item: DomainItem): FrontendDomain {
     timestamp: firstTimestamp,
     timestamps: item.timestamp || [],
     urlCount: item.url?.length || 0,
+    vit_score: item.vit_score ?? null,
   };
 }
 

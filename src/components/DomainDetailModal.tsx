@@ -527,6 +527,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
               {/* Screenshot Carousel - Controlled mode, synced with URL dropdown */}
               <div id="screenshot-section" className="space-y-3">
+                <div id="screenshot-label" className="text-sm font-medium">
+                  Vit Score : {currentCrawl.vitScore}%
+                </div>
                 <div className="flex items-center justify-between">
                   <span id="screenshot-label" className="text-sm font-medium">
                     Screenshot

@@ -18,7 +18,7 @@ import type {
 // Re-export types for consumers
 export type {
   DomainStatus,
-  ReasoningFilter,
+  // ReasoningFilter,
   SortBy,
   SortOrder,
   GetDomainsParams,
@@ -109,6 +109,7 @@ function mapCrawlToFrontend(item: CrawlHistoryItem): FrontendCrawlItem {
     reasoning: item.reasoning || "",
     innerText: item.inner_text,
     screenshot: formatScreenshot(item.screenshot),
+    vitScore: item.vit_score,
     isAmp: item.is_amp,
     keyword: item.keyword,
   };
@@ -203,15 +204,15 @@ export const domainService = {
     if (params.status && params.status !== "all") {
       queryParams.append("status", params.status);
     }
-    if (params.min_score !== undefined) {
-      queryParams.append("min_score", params.min_score.toString());
-    }
-    if (params.max_score !== undefined) {
-      queryParams.append("max_score", params.max_score.toString());
-    }
-    if (params.reasoning && params.reasoning !== "all") {
-      queryParams.append("reasoning", params.reasoning);
-    }
+    // if (params.min_score !== undefined) {
+    //   queryParams.append("min_score", params.min_score.toString());
+    // }
+    // if (params.max_score !== undefined) {
+    //   queryParams.append("max_score", params.max_score.toString());
+    // }
+    // if (params.reasoning && params.reasoning !== "all") {
+    //   queryParams.append("reasoning", params.reasoning);
+    // }
     if (params.verifikator) {
       queryParams.append("verifikator", params.verifikator);
     }

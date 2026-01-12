@@ -84,6 +84,7 @@ export interface FrontendDomain {
 
 // Single crawl history item from domain detail API
 export interface CrawlHistoryItem {
+  vit_score: number;
   crawl_id: string;
   url: string;
   timestamp: string;
@@ -114,6 +115,7 @@ export interface FrontendCrawlItem {
   reasoning: string;
   innerText: string;
   screenshot: string;
+  vitScore: number;
   isAmp: boolean;
   keyword: string | null;
 }

@@ -35,7 +35,6 @@ import {
   Save,
   Loader2,
   X,
-  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { domainService } from "@/services/domainService";
@@ -108,7 +107,6 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedCrawlIndex, setSelectedCrawlIndex] = useState(0);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Edit mode state
 
   // Fetch domain detail when modal opens
   useEffect(() => {
@@ -133,7 +131,6 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
       setSelectedCrawlIndex(0);
       setUserReasoning(""); // Reset user reasoning to empty
       setHasChanges(false);
-      setIsEditMode(false); // Exit edit mode when modal opens
     } catch (err) {
       console.error("Failed to fetch domain detail:", err);
       setError(
@@ -171,7 +168,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
   // Handle status change from dropdown - only update local state
   const handleStatusChange = (newStatus: DomainStatus) => {
-    if (newStatus === currentStatus || !isEditMode) return;
+    if (newStatus === currentStatus) return;
 
     setCurrentStatus(newStatus);
     // Mark as having changes so Save button becomes enabled
@@ -198,7 +195,6 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
       if (response.success) {
         setHasChanges(false);
-        setIsEditMode(false); // Exit edit mode after successful save
         toast.success(response.message || "Status berhasil disimpan");
 
         // Call onVerify callback if provided
@@ -227,20 +223,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
       setReasoning(crawl.reasoning || "");
       setUserReasoning(""); // Reset user reasoning when switching crawls
       setHasChanges(false);
-      setIsEditMode(false); // Exit edit mode when switching crawls
     }
-  };
-
-  const handleEditToggle = () => {
-    if (isEditMode && hasChanges) {
-      // Cancel edit mode with unsaved changes
-      if (currentCrawl) {
-        setCurrentStatus(currentCrawl.status);
-        setUserReasoning("");
-        setHasChanges(false);
-      }
-    }
-    setIsEditMode(!isEditMode);
   };
 
   const handleCarouselIndexChange = (index: number) => {
@@ -301,33 +284,15 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 >
                   {domainDetail.domainName}
                 </DialogTitle>
-                {/* Cancel button - only show when in edit mode */}
-                {onVerify && isEditMode && (
+                {/* Save button moved to footer */}
+                {hasChanges && (
                   <Button
-                    id="cancel-button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleEditToggle}
-                    className="gap-1"
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </Button>
-                )}
-                {/* Save button - next to Cancel */}
-                {onVerify && isEditMode && hasChanges && (
-                  <Button
-                    id="save-button"
+                    id="save-changes-button"
                     size="sm"
                     onClick={handleSave}
-                    disabled={isUpdating}
                     className="gap-1"
                   >
-                    {isUpdating ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
+                    <Save className="h-4 w-4" />
                     Save
                   </Button>
                 )}
@@ -385,84 +350,64 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 </a>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {/* Edit button - next to status dropdown */}
-              {onVerify && !isEditMode && (
-                <Button
-                  id="edit-button"
-                  size="sm"
-                  variant="default"
-                  onClick={() => setIsEditMode(true)}
-                  className="gap-1"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit
-                </Button>
-              )}
-              {onVerify ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    id="modal-status-badge"
-                    className="focus:outline-none"
-                    disabled={!isEditMode}
-                  >
-                    <Badge
-                      className={`${getStatusBadgeClass(currentStatus)} ${
-                        isEditMode
-                          ? "cursor-pointer hover:opacity-80"
-                          : "cursor-not-allowed opacity-60"
-                      } flex items-center gap-1`}
-                    >
-                      {getStatusLabel(currentStatus)}
-                      {isEditMode && <ChevronDown className="h-3 w-3" />}
-                    </Badge>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    id="status-dropdown-menu"
-                    align="end"
-                    className="z-[100]"
-                  >
-                    <DropdownMenuItem
-                      id="status-option-manual-check"
-                      onClick={() => handleStatusChange("manual-check")}
-                      className={
-                        currentStatus === "manual-check" ? "bg-muted" : ""
-                      }
-                    >
-                      <Badge className="bg-muted text-muted-foreground mr-2">
-                        Manual Check
-                      </Badge>
-                      {currentStatus === "manual-check" && "✓"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      id="status-option-judol"
-                      onClick={() => handleStatusChange("judol")}
-                      className={currentStatus === "judol" ? "bg-muted" : ""}
-                    >
-                      <Badge className="badge-judol mr-2">Judol</Badge>
-                      {currentStatus === "judol" && "✓"}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      id="status-option-non-judol"
-                      onClick={() => handleStatusChange("non-judol")}
-                      className={
-                        currentStatus === "non-judol" ? "bg-muted" : ""
-                      }
-                    >
-                      <Badge className="badge-non-judol mr-2">Non Judol</Badge>
-                      {currentStatus === "non-judol" && "✓"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Badge
+            {onVerify ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   id="modal-status-badge"
-                  className={getStatusBadgeClass(currentStatus)}
+                  className="focus:outline-none"
                 >
-                  {getStatusLabel(currentStatus)}
-                </Badge>
-              )}
-            </div>
+                  <Badge
+                    className={`${getStatusBadgeClass(
+                      currentStatus
+                    )} cursor-pointer hover:opacity-80 flex items-center gap-1`}
+                  >
+                    {getStatusLabel(currentStatus)}
+                    <ChevronDown className="h-3 w-3" />
+                  </Badge>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  id="status-dropdown-menu"
+                  align="end"
+                  className="z-[100]"
+                >
+                  <DropdownMenuItem
+                    id="status-option-manual-check"
+                    onClick={() => handleStatusChange("manual-check")}
+                    className={
+                      currentStatus === "manual-check" ? "bg-muted" : ""
+                    }
+                  >
+                    <Badge className="bg-muted text-muted-foreground mr-2">
+                      Manual Check
+                    </Badge>
+                    {currentStatus === "manual-check" && "✓"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    id="status-option-judol"
+                    onClick={() => handleStatusChange("judol")}
+                    className={currentStatus === "judol" ? "bg-muted" : ""}
+                  >
+                    <Badge className="badge-judol mr-2">Judol</Badge>
+                    {currentStatus === "judol" && "✓"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    id="status-option-non-judol"
+                    onClick={() => handleStatusChange("non-judol")}
+                    className={currentStatus === "non-judol" ? "bg-muted" : ""}
+                  >
+                    <Badge className="badge-non-judol mr-2">Non Judol</Badge>
+                    {currentStatus === "non-judol" && "✓"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Badge
+                id="modal-status-badge"
+                className={getStatusBadgeClass(currentStatus)}
+              >
+                {getStatusLabel(currentStatus)}
+              </Badge>
+            )}
           </div>
         </DialogHeader>
 
@@ -528,7 +473,6 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                   placeholder="Masukkan reasoning Anda..."
                   value={userReasoning}
                   onChange={(e) => handleUserReasoningChange(e.target.value)}
-                  disabled={!isEditMode}
                   className="min-h-[100px] text-sm resize-none"
                 />
               </div>

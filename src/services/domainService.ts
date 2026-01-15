@@ -353,4 +353,60 @@ export const domainService = {
 
     return results;
   },
+
+  /**
+   * Export filtered domains to CSV
+   * @param params - Query parameters matching current filters
+   * @returns Downloads CSV file
+   */
+  async exportDomainsToCSV(params: GetDomainsParams = {}): Promise<void> {
+    // Fetch all domains with current filters (no pagination limit)
+    const exportParams = { ...params, limit: 999999 };
+    const response = await this.getDomainsForFrontend(exportParams);
+
+    // Prepare CSV content
+    const headers = [
+      "Domain",
+      "URL",
+      "Status",
+      "Confidence Score",
+      "Final Score",
+      "Timestamp",
+      "Verified By",
+    ];
+
+    const rows = response.domains.map((domain) => [
+      domain.domain,
+      domain.url,
+      domain.status,
+      domain.confidenceScore.toString(),
+      domain.finalScore.toString(),
+      domain.timestamp,
+      domain.verifiedBy || "",
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row) =>
+        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
+      ),
+    ].join("\n");
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `domains_export_${new Date().toISOString().split("T")[0]}.csv`
+    );
+    link.style.visibility = "hidden";
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
 };

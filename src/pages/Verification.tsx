@@ -53,6 +53,7 @@ import {
   MoreHorizontal,
   Sparkles,
   Loader2,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useDomains } from "@/hooks/useDomains";
@@ -346,6 +347,37 @@ const Verification: React.FC = () => {
     }
   };
 
+  // Handle export judol data
+  const handleExportJudol = async () => {
+    try {
+      toast({
+        title: "Memulai export...",
+        description: "Mengekspor data judol yang terfilter",
+      });
+
+      // Export with judol filter only
+      await domainService.exportDomainsToCSV({
+        status: "judol",
+        search: debouncedSearch,
+        sort_by: sortColumn,
+        order: sortOrder,
+      });
+
+      toast({
+        title: "Export berhasil",
+        description: "Data judol telah diexport ke CSV",
+      });
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast({
+        title: "Error",
+        description:
+          err instanceof Error ? err.message : "Gagal mengexport data",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -570,33 +602,44 @@ const Verification: React.FC = () => {
                   </Badge>
                 )}
               </CardTitle>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    id="bulk-action-button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isProcessingLLM}
-                  >
-                    {isProcessingLLM ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <MoreHorizontal className="h-4 w-4 mr-2" />
-                    )}
-                    {isProcessingLLM ? "Memproses..." : "Bulk Action"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent id="bulk-action-dropdown" align="end">
-                  <DropdownMenuItem
-                    id="bulk-action-ai-reasoning"
-                    onClick={handleBulkAIReasoning}
-                    disabled={isProcessingLLM}
-                  >
-                    <Sparkles className="h-4 w-4 mr-2" />
-                    Lakukan AI Reasoning
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-2">
+                <Button
+                  id="export-judol-button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportJudol}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Data Judol
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      id="bulk-action-button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isProcessingLLM}
+                    >
+                      {isProcessingLLM ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <MoreHorizontal className="h-4 w-4 mr-2" />
+                      )}
+                      {isProcessingLLM ? "Memproses..." : "Bulk Action"}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent id="bulk-action-dropdown" align="end">
+                    <DropdownMenuItem
+                      id="bulk-action-ai-reasoning"
+                      onClick={handleBulkAIReasoning}
+                      disabled={isProcessingLLM}
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      Lakukan AI Reasoning
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">

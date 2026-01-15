@@ -68,6 +68,9 @@ const AdminConsole: React.FC = () => {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [editSchedule, setEditSchedule] = useState<string | undefined>(
+    undefined
+  );
   const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
@@ -166,9 +169,10 @@ const AdminConsole: React.FC = () => {
   const handleEdit = (keyword: Keyword) => {
     setEditingId(keyword.id);
     setEditValue(keyword.keyword);
+    setEditSchedule(keyword.schedule);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editValue.trim()) {
       toast({
         title: "Error",
@@ -177,39 +181,72 @@ const AdminConsole: React.FC = () => {
       });
       return;
     }
-    if (!editingId) return;
+    if (!editingId || isSavingKeyword) return;
 
-    // Update local state only
-    setKeywords((prev) =>
-      prev.map((k) =>
-        k.id === editingId ? { ...k, keyword: editValue.trim() } : k
-      )
-    );
+    setIsSavingKeyword(true);
+    try {
+      // Get current cron expression from global schedule selector
+      const selectedCron = CRON_OPTIONS.find(
+        (opt) => opt.value === cronSchedule
+      )?.cron;
 
-    setEditingId(null);
-    setEditValue("");
-
-    toast({
-      title: "Berhasil",
-      description: "Keyword berhasil diubah",
-    });
+      await scrapeService.updateKeyword(editingId, {
+        keyword: editValue.trim(),
+        schedule: selectedCron, // Always use schedule from dropdown
+      });
+      setEditingId(null);
+      setEditValue("");
+      setEditSchedule(undefined);
+      toast({ title: "Berhasil", description: "Keyword berhasil diubah" });
+      await fetchKeywords(); // Refresh from DB
+    } catch (error) {
+      console.error("Failed to update keyword:", error);
+      toast({
+        title: "Gagal mengubah keyword",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tidak dapat mengubah keyword",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingKeyword(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setEditValue("");
+    setEditSchedule(undefined);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (deletingKeywordId === id) return;
 
-    // Remove from local state only
-    setKeywords((prev) => prev.filter((k) => k.id !== id));
+    setDeletingKeywordId(id);
+    try {
+      await scrapeService.deleteKeyword(id);
 
-    toast({
-      title: "Berhasil",
-      description: "Keyword berhasil dihapus",
-    });
+      toast({
+        title: "Berhasil",
+        description: "Keyword berhasil dihapus",
+      });
+
+      // Refresh keywords from database
+      await fetchKeywords();
+    } catch (error) {
+      console.error("Failed to delete keyword:", error);
+      toast({
+        title: "Gagal menghapus keyword",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Tidak dapat menghapus keyword",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingKeywordId(null);
+    }
   };
 
   const handleAddKeyword = () => {

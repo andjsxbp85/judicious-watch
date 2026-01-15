@@ -47,6 +47,7 @@ export interface CreateKeywordResponse {
 
 export interface UpdateKeywordRequest {
   keyword: string;
+  schedule?: string;
 }
 
 export interface UpdateKeywordResponse {

@@ -35,6 +35,7 @@ import {
   Save,
   Loader2,
   X,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { domainService } from "@/services/domainService";
@@ -102,10 +103,12 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
   // Form state
   const [currentStatus, setCurrentStatus] =
     useState<DomainStatus>("manual-check");
-  const [reasoning, setReasoning] = useState<string>("");
+  const [reasoning, setReasoning] = useState<string>(""); // AI reasoning from crawl
+  const [userReasoning, setUserReasoning] = useState<string>(""); // User's manual reasoning
   const [hasChanges, setHasChanges] = useState(false);
   const [selectedCrawlIndex, setSelectedCrawlIndex] = useState(0);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false); // Edit mode state
 
   // Fetch domain detail when modal opens
   useEffect(() => {
@@ -128,7 +131,9 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
         setReasoning(firstCrawl.reasoning || "");
       }
       setSelectedCrawlIndex(0);
+      setUserReasoning(""); // Reset user reasoning to empty
       setHasChanges(false);
+      setIsEditMode(false); // Exit edit mode when modal opens
     } catch (err) {
       console.error("Failed to fetch domain detail:", err);
       setError(
@@ -166,24 +171,18 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
   // Handle status change from dropdown - only update local state
   const handleStatusChange = (newStatus: DomainStatus) => {
-    if (newStatus === currentStatus) return;
+    if (newStatus === currentStatus || !isEditMode) return;
 
     setCurrentStatus(newStatus);
     // Mark as having changes so Save button becomes enabled
     const originalStatus = currentCrawl?.status || "manual-check";
-    setHasChanges(
-      newStatus !== originalStatus ||
-        reasoning !== (currentCrawl?.reasoning || "")
-    );
+    setHasChanges(newStatus !== originalStatus || userReasoning !== "");
   };
 
-  const handleReasoningChange = (value: string) => {
-    setReasoning(value);
-    const originalReasoning = currentCrawl?.reasoning || "";
+  const handleUserReasoningChange = (value: string) => {
+    setUserReasoning(value);
     const originalStatus = currentCrawl?.status || "manual-check";
-    setHasChanges(
-      value !== originalReasoning || currentStatus !== originalStatus
-    );
+    setHasChanges(value !== "" || currentStatus !== originalStatus);
   };
 
   const handleSave = async () => {
@@ -199,11 +198,12 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
       if (response.success) {
         setHasChanges(false);
+        setIsEditMode(false); // Exit edit mode after successful save
         toast.success(response.message || "Status berhasil disimpan");
 
         // Call onVerify callback if provided
         if (onVerify) {
-          onVerify(domainId, currentStatus, reasoning);
+          onVerify(domainId, currentStatus, userReasoning);
         }
       } else {
         toast.error("Gagal menyimpan status");
@@ -225,8 +225,22 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
       const crawl = domainDetail.crawls[index];
       setCurrentStatus(crawl.status);
       setReasoning(crawl.reasoning || "");
+      setUserReasoning(""); // Reset user reasoning when switching crawls
       setHasChanges(false);
+      setIsEditMode(false); // Exit edit mode when switching crawls
     }
+  };
+
+  const handleEditToggle = () => {
+    if (isEditMode && hasChanges) {
+      // Cancel edit mode with unsaved changes
+      if (currentCrawl) {
+        setCurrentStatus(currentCrawl.status);
+        setUserReasoning("");
+        setHasChanges(false);
+      }
+    }
+    setIsEditMode(!isEditMode);
   };
 
   const handleCarouselIndexChange = (index: number) => {
@@ -287,15 +301,33 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 >
                   {domainDetail.domainName}
                 </DialogTitle>
-                {/* Save button moved to footer */}
-                {hasChanges && (
+                {/* Cancel button - only show when in edit mode */}
+                {onVerify && isEditMode && (
                   <Button
-                    id="save-changes-button"
+                    id="cancel-button"
                     size="sm"
-                    onClick={handleSave}
+                    variant="outline"
+                    onClick={handleEditToggle}
                     className="gap-1"
                   >
-                    <Save className="h-4 w-4" />
+                    <X className="h-4 w-4" />
+                    Cancel
+                  </Button>
+                )}
+                {/* Save button - next to Cancel */}
+                {onVerify && isEditMode && hasChanges && (
+                  <Button
+                    id="save-button"
+                    size="sm"
+                    onClick={handleSave}
+                    disabled={isUpdating}
+                    className="gap-1"
+                  >
+                    {isUpdating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
                     Save
                   </Button>
                 )}
@@ -353,64 +385,84 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 </a>
               </div>
             </div>
-            {onVerify ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  id="modal-status-badge"
-                  className="focus:outline-none"
+            <div className="flex items-center gap-2">
+              {/* Edit button - next to status dropdown */}
+              {onVerify && !isEditMode && (
+                <Button
+                  id="edit-button"
+                  size="sm"
+                  variant="default"
+                  onClick={() => setIsEditMode(true)}
+                  className="gap-1"
                 >
-                  <Badge
-                    className={`${getStatusBadgeClass(
-                      currentStatus
-                    )} cursor-pointer hover:opacity-80 flex items-center gap-1`}
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </Button>
+              )}
+              {onVerify ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    id="modal-status-badge"
+                    className="focus:outline-none"
+                    disabled={!isEditMode}
                   >
-                    {getStatusLabel(currentStatus)}
-                    <ChevronDown className="h-3 w-3" />
-                  </Badge>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  id="status-dropdown-menu"
-                  align="end"
-                  className="z-[100]"
-                >
-                  <DropdownMenuItem
-                    id="status-option-manual-check"
-                    onClick={() => handleStatusChange("manual-check")}
-                    className={
-                      currentStatus === "manual-check" ? "bg-muted" : ""
-                    }
-                  >
-                    <Badge className="bg-muted text-muted-foreground mr-2">
-                      Manual Check
+                    <Badge
+                      className={`${getStatusBadgeClass(currentStatus)} ${
+                        isEditMode
+                          ? "cursor-pointer hover:opacity-80"
+                          : "cursor-not-allowed opacity-60"
+                      } flex items-center gap-1`}
+                    >
+                      {getStatusLabel(currentStatus)}
+                      {isEditMode && <ChevronDown className="h-3 w-3" />}
                     </Badge>
-                    {currentStatus === "manual-check" && "✓"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    id="status-option-judol"
-                    onClick={() => handleStatusChange("judol")}
-                    className={currentStatus === "judol" ? "bg-muted" : ""}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    id="status-dropdown-menu"
+                    align="end"
+                    className="z-[100]"
                   >
-                    <Badge className="badge-judol mr-2">Judol</Badge>
-                    {currentStatus === "judol" && "✓"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    id="status-option-non-judol"
-                    onClick={() => handleStatusChange("non-judol")}
-                    className={currentStatus === "non-judol" ? "bg-muted" : ""}
-                  >
-                    <Badge className="badge-non-judol mr-2">Non Judol</Badge>
-                    {currentStatus === "non-judol" && "✓"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Badge
-                id="modal-status-badge"
-                className={getStatusBadgeClass(currentStatus)}
-              >
-                {getStatusLabel(currentStatus)}
-              </Badge>
-            )}
+                    <DropdownMenuItem
+                      id="status-option-manual-check"
+                      onClick={() => handleStatusChange("manual-check")}
+                      className={
+                        currentStatus === "manual-check" ? "bg-muted" : ""
+                      }
+                    >
+                      <Badge className="bg-muted text-muted-foreground mr-2">
+                        Manual Check
+                      </Badge>
+                      {currentStatus === "manual-check" && "✓"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      id="status-option-judol"
+                      onClick={() => handleStatusChange("judol")}
+                      className={currentStatus === "judol" ? "bg-muted" : ""}
+                    >
+                      <Badge className="badge-judol mr-2">Judol</Badge>
+                      {currentStatus === "judol" && "✓"}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      id="status-option-non-judol"
+                      onClick={() => handleStatusChange("non-judol")}
+                      className={
+                        currentStatus === "non-judol" ? "bg-muted" : ""
+                      }
+                    >
+                      <Badge className="badge-non-judol mr-2">Non Judol</Badge>
+                      {currentStatus === "non-judol" && "✓"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <Badge
+                  id="modal-status-badge"
+                  className={getStatusBadgeClass(currentStatus)}
+                >
+                  {getStatusLabel(currentStatus)}
+                </Badge>
+              )}
+            </div>
           </div>
         </DialogHeader>
 
@@ -455,7 +507,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
               {/* Reasoning */}
               <div id="reasoning-section" className="space-y-3">
                 <span id="reasoning-label" className="text-sm font-medium">
-                  Reasoning
+                  AI Reasoning
                 </span>
                 <div className="min-h-[100px] rounded-lg border border-border p-4 bg-muted/30">
                   <p
@@ -465,6 +517,20 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                     {reasoning || "Tidak ada reasoning dari LLM"}
                   </p>
                 </div>
+              </div>
+
+              <div id="user-reasoning-section" className="space-y-3">
+                <span id="user-reasoning-label" className="text-sm font-medium">
+                  User Reasoning
+                </span>
+                <Textarea
+                  id="user-reasoning-input"
+                  placeholder="Masukkan reasoning Anda..."
+                  value={userReasoning}
+                  onChange={(e) => handleUserReasoningChange(e.target.value)}
+                  disabled={!isEditMode}
+                  className="min-h-[100px] text-sm resize-none"
+                />
               </div>
 
               {/* Keywords */}
@@ -604,7 +670,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 domain: domainDetail.domainName,
                 status: currentStatus,
                 confidenceScore: currentCrawl.confidenceScore,
-                reasoning: reasoning,
+                reasoning: reasoning, // AI reasoning
                 extractedContent: currentCrawl.innerText,
                 keywords: [],
               }}

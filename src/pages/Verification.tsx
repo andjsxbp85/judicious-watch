@@ -527,43 +527,6 @@ const Verification: React.FC = () => {
                       </Select>
                     </div>
 
-                    {/* Score Range Filter - HIDDEN
-                    <div id="filter-score-section" className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label
-                          id="filter-score-label"
-                          className="text-sm font-medium"
-                        >
-                          Score
-                        </Label>
-                        <span
-                          id="filter-score-value"
-                          className="text-sm text-muted-foreground"
-                        >
-                          {tempScoreRange[0]} - {tempScoreRange[1]}
-                        </span>
-                      </div>
-                      <Slider
-                        id="score-range-slider"
-                        value={tempScoreRange}
-                        onValueChange={(value) =>
-                          setTempScoreRange(value as [number, number])
-                        }
-                        min={0}
-                        max={100}
-                        step={1}
-                        className="w-full"
-                      />
-                      <div
-                        id="filter-score-labels"
-                        className="flex justify-between text-xs text-muted-foreground"
-                      >
-                        <span id="filter-score-min-label">0</span>
-                        <span id="filter-score-max-label">100</span>
-                      </div>
-                    </div>
-                    */}
-
                     {/* Apply Filter Button */}
                     <Button
                       id="apply-filter-button"

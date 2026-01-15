@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ServiceLog from "./pages/ServiceLog";
 import UserManagement from "./pages/UserManagement";
+import AdminConsole from "./pages/AdminConsole";
 import NotFound from "./pages/NotFound";
 
 // Lazy load Verification page (heavy component)
@@ -120,6 +121,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute adminOnly>
             <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin-console"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminConsole />
           </ProtectedRoute>
         }
       />

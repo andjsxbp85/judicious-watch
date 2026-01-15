@@ -38,6 +38,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       path: "/verification",
       id: "nav-verification",
     },
+    // {
+    //   icon: CheckCircle,
+    //   label: "Admin Console",
+    //   path: "/admin-console",
+    //   id: "nav-admin-console",
+    // },
     {
       icon: Activity,
       label: "Log Servis",
@@ -45,7 +51,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       id: "nav-service-log",
     },
     ...(isAdmin
-      ? [{ icon: Users, label: "Kelola User", path: "/users", id: "nav-users" }]
+      ? [
+          {
+            icon: Users,
+            label: "Kelola User",
+            path: "/users",
+            id: "nav-users",
+          },
+          {
+            icon: CheckCircle,
+            label: "Admin Console",
+            path: "/admin-console",
+            id: "nav-admin-console",
+          },
+        ]
       : []),
   ];
 

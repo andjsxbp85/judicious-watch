@@ -20,10 +20,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
-import { Globe, X, Check, Loader2, Plus, Pencil, Trash2 } from "lucide-react";
+import {
+  Save,
+  Play,
+  X,
+  Check,
+  Loader2,
+  Plus,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { scrapeService } from "@/services/scrapeService";
-import type { CrawlEngine } from "@/types/domainTypes";
+import type {
+  CrawlEngine,
+  SaveKeywordsScheduleRequest,
+} from "@/types/scrapeTypes";
 
 interface Keyword {
   id: string;
@@ -76,11 +88,11 @@ const AdminConsole: React.FC = () => {
   const [editTldValue, setEditTldValue] = useState("");
 
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
-  const [isAddingKeyword, setIsAddingKeyword] = useState(false);
   const [isSavingKeyword, setIsSavingKeyword] = useState(false);
   const [deletingKeywordId, setDeletingKeywordId] = useState<string | null>(
     null
   );
+  const [isSavingConfig, setIsSavingConfig] = useState(false);
   const [isCrawling, setIsCrawling] = useState(false);
 
   // Fetch keywords on component mount
@@ -156,7 +168,7 @@ const AdminConsole: React.FC = () => {
     setEditValue(keyword.keyword);
   };
 
-  const handleSaveEdit = async () => {
+  const handleSaveEdit = () => {
     if (!editValue.trim()) {
       toast({
         title: "Error",
@@ -165,35 +177,22 @@ const AdminConsole: React.FC = () => {
       });
       return;
     }
-    if (!editingId || isSavingKeyword) return;
+    if (!editingId) return;
 
-    setIsSavingKeyword(true);
-    try {
-      const updatedKeyword = await scrapeService.updateKeyword(editingId, {
-        keyword: editValue.trim(),
-      });
-      setKeywords((prev) =>
-        prev.map((k) => (k.id === editingId ? updatedKeyword : k))
-      );
-      setEditingId(null);
-      setEditValue("");
-      toast({
-        title: "Berhasil",
-        description: "Keyword berhasil diubah",
-      });
-    } catch (error) {
-      console.error("Failed to update keyword:", error);
-      toast({
-        title: "Gagal mengubah keyword",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Tidak dapat mengubah keyword",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSavingKeyword(false);
-    }
+    // Update local state only
+    setKeywords((prev) =>
+      prev.map((k) =>
+        k.id === editingId ? { ...k, keyword: editValue.trim() } : k
+      )
+    );
+
+    setEditingId(null);
+    setEditValue("");
+
+    toast({
+      title: "Berhasil",
+      description: "Keyword berhasil diubah",
+    });
   };
 
   const handleCancelEdit = () => {
@@ -201,32 +200,19 @@ const AdminConsole: React.FC = () => {
     setEditValue("");
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (deletingKeywordId === id) return;
-    setDeletingKeywordId(id);
-    try {
-      await scrapeService.deleteKeyword(id);
-      setKeywords((prev) => prev.filter((k) => k.id !== id));
-      toast({
-        title: "Berhasil",
-        description: "Keyword berhasil dihapus",
-      });
-    } catch (error) {
-      console.error("Failed to delete keyword:", error);
-      toast({
-        title: "Gagal menghapus keyword",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Tidak dapat menghapus keyword",
-        variant: "destructive",
-      });
-    } finally {
-      setDeletingKeywordId(null);
-    }
+
+    // Remove from local state only
+    setKeywords((prev) => prev.filter((k) => k.id !== id));
+
+    toast({
+      title: "Berhasil",
+      description: "Keyword berhasil dihapus",
+    });
   };
 
-  const handleAddKeyword = async () => {
+  const handleAddKeyword = () => {
     if (!newKeyword.trim()) {
       toast({
         title: "Error",
@@ -235,51 +221,86 @@ const AdminConsole: React.FC = () => {
       });
       return;
     }
-    if (isAddingKeyword) return;
 
-    setIsAddingKeyword(true);
-    try {
-      // Get selected cron schedule
-      const selectedCron = CRON_OPTIONS.find(
-        (opt) => opt.value === cronSchedule
-      );
+    // Get selected cron schedule
+    const selectedCron = CRON_OPTIONS.find((opt) => opt.value === cronSchedule);
 
-      // Create keyword (without schedule for now - backend implementation later)
-      const createdKeyword = await scrapeService.createKeyword({
-        keyword: newKeyword.trim(),
-      });
+    // Add keyword to frontend state only (not saving to DB yet)
+    // Will be saved to DB when user clicks "Simpan Konfigurasi" button
+    const newKeywordObj: Keyword = {
+      id: `temp-${Date.now()}`, // Temporary ID for frontend
+      keyword: newKeyword.trim(),
+      schedule: selectedCron?.cron,
+    };
 
-      // Add schedule to local state (frontend only)
-      const keywordWithSchedule: Keyword = {
-        ...createdKeyword,
-        schedule: selectedCron?.cron,
-      };
-
-      setKeywords((prev) => [...prev, keywordWithSchedule]);
-      setNewKeyword("");
-      setIsAdding(false);
-      toast({
-        title: "Berhasil",
-        description: "Keyword baru berhasil ditambahkan",
-      });
-    } catch (error) {
-      console.error("Failed to create keyword:", error);
-      toast({
-        title: "Gagal menambahkan keyword",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Tidak dapat menambahkan keyword",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAddingKeyword(false);
-    }
+    setKeywords((prev) => [...prev, newKeywordObj]);
+    setNewKeyword("");
+    setIsAdding(false);
+    toast({
+      title: "Berhasil",
+      description: "Keyword berhasil ditambahkan ke daftar keyword",
+    });
   };
 
   const handleCancelAdd = () => {
     setNewKeyword("");
     setIsAdding(false);
+  };
+
+  const handleSaveConfiguration = async () => {
+    if (keywords.length === 0) {
+      toast({
+        title: "Error",
+        description: "Tambahkan minimal satu keyword sebelum menyimpan",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingConfig(true);
+    try {
+      // Get the cron expression for the current schedule
+      const selectedCronExpression = CRON_OPTIONS.find(
+        (opt) => opt.value === cronSchedule
+      )?.cron;
+
+      if (!selectedCronExpression) {
+        throw new Error("Invalid schedule selected");
+      }
+
+      // Prepare request data
+      const requestData: SaveKeywordsScheduleRequest = {
+        keywords: keywords.map((k) => k.keyword).join(", "), // Convert array to comma-separated string
+        schedule: selectedCronExpression,
+      };
+
+      // Call the API
+      const response = await scrapeService.saveKeywordsSchedule(requestData);
+
+      if (response.success) {
+        toast({
+          title: "Keyword dan Jadwal Berhasil Disimpan",
+          description: `${keywords.length} keyword dengan jadwal ${
+            CRON_OPTIONS.find((opt) => opt.value === cronSchedule)?.label
+          } berhasil disimpan.`,
+        });
+
+        // Refresh the keywords list to get updated data
+        await fetchKeywords();
+      }
+    } catch (error) {
+      console.error("Save configuration error:", error);
+      toast({
+        title: "Gagal Menyimpan Keyword dan Jadwal",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan saat menyimpan keyword dan jadwal",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingConfig(false);
+    }
   };
 
   const handleStartCrawl = async () => {
@@ -517,25 +538,20 @@ const AdminConsole: React.FC = () => {
                       if (e.key === "Enter") handleAddKeyword();
                       if (e.key === "Escape") handleCancelAdd();
                     }}
-                    disabled={isAddingKeyword}
                     autoFocus
                   />
                   <Button
-                    size="sm"
-                    // onClick={handleAddKeyword}
-                    disabled={isAddingKeyword}
+                    id="confirm-add-keyword-btn"
+                    size="icon"
+                    onClick={handleAddKeyword}
                   >
-                    {isAddingKeyword ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Check className="h-4 w-4" />
-                    )}
+                    <Check className="h-4 w-4" />
                   </Button>
                   <Button
-                    size="sm"
+                    id="cancel-add-keyword-btn"
+                    size="icon"
                     variant="outline"
                     onClick={handleCancelAdd}
-                    disabled={isAddingKeyword}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -636,7 +652,7 @@ const AdminConsole: React.FC = () => {
                                     variant="ghost"
                                     onClick={() => handleEdit(keyword)}
                                     className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                    disabled={isCrawling}
+                                    disabled={isSavingConfig}
                                   >
                                     <Pencil className="h-4 w-4" />
                                   </Button>
@@ -646,7 +662,7 @@ const AdminConsole: React.FC = () => {
                                     onClick={() => handleDelete(keyword.id)}
                                     className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
                                     disabled={
-                                      isCrawling ||
+                                      isSavingConfig ||
                                       deletingKeywordId === keyword.id
                                     }
                                   >
@@ -668,12 +684,11 @@ const AdminConsole: React.FC = () => {
               </div>
             </div>
 
-            {/* Start Crawl Button */}
-            <div className="flex justify-end">
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3">
               <Button
-                // onClick={handleStartCrawl}
-                onClick={handleAddKeyword}
-                disabled={isCrawling || keywords.length === 0}
+                onClick={handleStartCrawl}
+                disabled={isCrawling || keywords.length === 0 || isSavingConfig}
                 size="lg"
               >
                 {isCrawling ? (
@@ -683,8 +698,27 @@ const AdminConsole: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Globe className="h-4 w-4 mr-2" />
-                    Mulai Crawl ({keywords.length} keyword)
+                    <Play className="h-4 w-4 mr-2" />
+                    Mulai Crawling
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleSaveConfiguration}
+                disabled={isSavingConfig || keywords.length === 0 || isCrawling}
+                size="lg"
+                variant="default"
+              >
+                {isSavingConfig ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Menyimpan Keyword dan Jadwal...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Simpan Keyword dan Jadwal
                   </>
                 )}
               </Button>

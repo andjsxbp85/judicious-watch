@@ -9,6 +9,9 @@ import type {
   UpdateKeywordRequest,
   UpdateKeywordResponse,
   DeleteKeywordResponse,
+  SaveKeywordsScheduleRequest,
+  SaveKeywordsScheduleResponse,
+  GetKeywordsScheduleResponse,
 } from "@/types/scrapeTypes";
 
 // Re-export types for consumers
@@ -25,6 +28,9 @@ export type {
   DeleteKeywordResponse,
   ValidationErrorDetail,
   ValidationError,
+  SaveKeywordsScheduleRequest,
+  SaveKeywordsScheduleResponse,
+  GetKeywordsScheduleResponse,
 } from "@/types/scrapeTypes";
 
 // ============================================
@@ -94,6 +100,30 @@ export const scrapeService = {
   async deleteKeyword(keywordId: string): Promise<DeleteKeywordResponse> {
     return apiClient(ENDPOINTS.DELETE_KEYWORD(keywordId), {
       method: "DELETE",
+    });
+  },
+
+  /**
+   * Save keywords with schedule configuration
+   * @param request - Keywords array and cron schedule
+   * @returns Promise with save confirmation
+   */
+  async saveKeywordsSchedule(
+    request: SaveKeywordsScheduleRequest
+  ): Promise<SaveKeywordsScheduleResponse> {
+    return apiClient(ENDPOINTS.SAVE_KEYWORDS_SCHEDULE, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  },
+
+  /**
+   * Get all keywords and their schedule
+   * @returns Promise with keywords and schedule
+   */
+  async getKeywordsSchedule(): Promise<GetKeywordsScheduleResponse> {
+    return apiClient(ENDPOINTS.GET_KEYWORDS_SCHEDULE, {
+      method: "GET",
     });
   },
 };

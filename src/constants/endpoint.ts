@@ -23,6 +23,10 @@ const ENDPOINTS = {
     `${APP_BASE_URL_API}/scrape/keywords/${keywordId}`,
   GET_SCRAPED_DATA: `${APP_BASE_URL_API}/scrape/multi-keyword`,
 
+  // Keywords Schedule Management
+  GET_KEYWORDS_SCHEDULE: `${APP_BASE_URL_API}/scrape/multiple-keywords-schedule`,
+  SAVE_KEYWORDS_SCHEDULE: `${APP_BASE_URL_API}/scrape/multiple-keywords-schedule`,
+
   // ============================================
   // DOMAINS
   // ============================================

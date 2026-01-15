@@ -59,7 +59,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             id: "nav-users",
           },
           {
-            icon: CheckCircle,
+            icon: Shield,
             label: "Admin Console",
             path: "/admin-console",
             id: "nav-admin-console",

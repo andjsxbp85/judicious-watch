@@ -33,6 +33,7 @@ export interface ScrapeMultiKeywordResponse {
 export interface KeywordItem {
   id: string;
   keyword: string;
+  schedule?: string;
 }
 
 export interface CreateKeywordRequest {
@@ -72,4 +73,30 @@ export interface ValidationErrorDetail {
 
 export interface ValidationError {
   detail: ValidationErrorDetail[];
+}
+
+// ============================================
+// MULTIPLE KEYWORDS SCHEDULE API TYPES
+// ============================================
+
+// Request body for POST /scrape/multiple-keywords-schedule
+export interface SaveKeywordsScheduleRequest {
+  keywords: string; // Comma-separated string, NOT array
+  schedule: string; // cron expression
+}
+
+// Response for POST /scrape/multiple-keywords-schedule
+export interface SaveKeywordsScheduleResponse {
+  success: boolean;
+  message: string;
+  new_keywords: number; // Changed from keywords_updated
+  schedule_updated: boolean;
+  schedule: string;
+}
+
+// Response for GET /scrape/multiple-keywords-schedule
+export interface GetKeywordsScheduleResponse {
+  success: boolean;
+  keywords: string; // comma-separated string
+  schedule: string; // cron expression
 }

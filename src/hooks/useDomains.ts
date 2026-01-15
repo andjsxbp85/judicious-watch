@@ -95,8 +95,8 @@ export function useDomains(params: UseDomainsParams = {}): UseDomainsReturn {
   );
 
   // Sorting state
-  const [sortColumn, setSortColumn] = useState<SortBy>("domain");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [sortColumn, setSortColumn] = useState<SortBy>("timestamp");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");;
 
   const queryClient = useQueryClient();
 

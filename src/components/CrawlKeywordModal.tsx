@@ -57,7 +57,15 @@ const CrawlKeywordModal: React.FC<CrawlKeywordModalProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
   // Available TLDs
-  const [tldList, setTldList] = useState<string[]>([]);
+  const DEFAULT_TLDS = [
+    ".ac.id",
+    ".go.id",
+    ".or.id",
+    ".sch.id",
+    ".mil.id",
+    ".desa.id",
+  ];
+  const [tldList, setTldList] = useState<string[]>(DEFAULT_TLDS);
   const [newTld, setNewTld] = useState("");
   const [isAddingTld, setIsAddingTld] = useState(false);
   const [editingTldIndex, setEditingTldIndex] = useState<number | null>(null);

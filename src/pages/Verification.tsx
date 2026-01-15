@@ -808,7 +808,7 @@ const Verification: React.FC = () => {
                               {domain.status === "manual-check" &&
                               domain.finalScore === 0
                                 ? "N/A"
-                                : `${domain.finalScore}%`}
+                                : `${domain.finalScore.toFixed(2)}%`}
                             </span>
                           </div>
                         </TableCell>

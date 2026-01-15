@@ -440,7 +440,8 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                         : "text-warning"
                     }`}
                   >
-                    {currentCrawl.confidenceScore}%
+                      {currentStatus === "manual-check" ? "N/A"
+    : `${currentCrawl.confidenceScore.toFixed(2)}%`}
                   </span>
                 </div>
                 <Progress
@@ -527,9 +528,10 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
               {/* Screenshot Carousel - Controlled mode, synced with URL dropdown */}
               <div id="screenshot-section" className="space-y-3">
-                <div id="screenshot-label" className="text-sm font-medium">
-                  Vit Score : {currentCrawl.vitScore}%
-                </div>
+                Vit Score :{" "}
+                  {currentCrawl.vitScore !== null
+                    ? `${currentCrawl.vitScore.toFixed(2)}%`
+                    : "N/A"}
                 <div className="flex items-center justify-between">
                   <span id="screenshot-label" className="text-sm font-medium">
                     Screenshot

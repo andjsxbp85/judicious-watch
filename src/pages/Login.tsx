@@ -35,7 +35,7 @@ const Login: React.FC = () => {
       if (success) {
         toast({
           title: "Login berhasil",
-          description: "Selamat datang di Sistem Pengawasan Ruang Digital",
+          description: "Selamat datang di Sistem Pengawasan Ruang Digital experiment",
         });
         navigate("/dashboard");
       } else {

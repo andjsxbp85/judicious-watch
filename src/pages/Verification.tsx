@@ -813,26 +813,39 @@ const Verification: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          <img
-                            id={`domain-screenshot-${domain.id}`}
-                            src={
-                              failedImages.has(domain.id)
-                                ? "/screenshots/placeholder.png"
-                                : domain.screenshot
-                            }
-                            alt={domain.domain}
-                            className="w-24 h-14 object-cover rounded border border-border bg-muted"
-                            loading="lazy"
-                            onError={(e) => {
-                              if (!failedImages.has(domain.id)) {
-                                setFailedImages((prev) =>
-                                  new Set(prev).add(domain.id)
-                                );
-                                (e.target as HTMLImageElement).src =
-                                  "/screenshots/placeholder.png";
+                          <div className="flex flex-col items-center gap-1">
+                            <img
+                              id={`domain-screenshot-${domain.id}`}
+                              src={
+                                failedImages.has(domain.id)
+                                  ? "/screenshots/placeholder.png"
+                                  : domain.screenshot
                               }
-                            }}
-                          />
+                              alt={domain.domain}
+                              className="w-24 h-14 object-cover rounded border border-border bg-muted"
+                              loading="lazy"
+                              onError={(e) => {
+                                if (!failedImages.has(domain.id)) {
+                                  setFailedImages((prev) =>
+                                    new Set(prev).add(domain.id)
+                                  );
+                                  (e.target as HTMLImageElement).src =
+                                    "/screenshots/placeholder.png";
+                                }
+                              }}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {domain.urlCount
+                                ? `${domain.urlCount} URL${
+                                    domain.urlCount > 1 ? "s" : ""
+                                  }`
+                                : Array.isArray(domain.url)
+                                ? `${domain.url.length} URL${
+                                    domain.url.length > 1 ? "s" : ""
+                                  }`
+                                : "1 URL"}
+                            </span>
+                          </div>
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <span

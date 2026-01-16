@@ -35,7 +35,8 @@ const Login: React.FC = () => {
       if (success) {
         toast({
           title: "Login berhasil",
-          description: "Selamat datang di Sistem Pengawasan Ruang Digital experiment",
+          description:
+            "Selamat datang di Sistem Pengawasan Ruang Digital experiment",
         });
         navigate("/dashboard");
       } else {
@@ -55,7 +56,7 @@ const Login: React.FC = () => {
           <CardHeader className="space-y-2 text-center">
             <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
             <CardDescription className="text-center mt-10">
-              Masuk ke Sistem Pengawasan Ruang Digital
+              Masuk ke Sistem Pengawasan Ruang Digital experiment
             </CardDescription>
           </CardHeader>
 

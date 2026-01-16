@@ -492,7 +492,7 @@ const AdminConsole: React.FC = () => {
               ) : (
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Tambah TLD (misal: .com, .net)"
+                    placeholder="Tambah whitelist domain (misal: .com, .net)"
                     value={newTld}
                     onChange={(e) => setNewTld(e.target.value)}
                     onKeyDown={(e) => {

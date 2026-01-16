@@ -409,4 +409,43 @@ export const domainService = {
     link.click();
     document.body.removeChild(link);
   },
+
+  /**
+   * Export judol data using backend endpoint
+   * Downloads CSV file directly from server
+   */
+  async exportJudolData(): Promise<void> {
+    try {
+      const response = await fetch(ENDPOINTS.EXPORT_JUDOL, {
+        method: "GET",
+        credentials: "include", // Include cookies for authentication
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      // Get the blob from response
+      const blob = await response.blob();
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `judol_by_domain_${
+        new Date().toISOString().split("T")[0]
+      }.csv`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Export judol data failed:", error);
+      throw error;
+    }
+  },
 };

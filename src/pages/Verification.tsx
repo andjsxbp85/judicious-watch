@@ -352,16 +352,11 @@ const Verification: React.FC = () => {
     try {
       toast({
         title: "Memulai export...",
-        description: "Mengekspor data judol yang terfilter",
+        description: "Mengekspor data judol dari server",
       });
 
-      // Export with judol filter only
-      await domainService.exportDomainsToCSV({
-        status: "judol",
-        search: debouncedSearch,
-        sort_by: sortColumn,
-        order: sortOrder,
-      });
+      // Export judol data using backend endpoint
+      await domainService.exportJudolData();
 
       toast({
         title: "Export berhasil",
@@ -541,14 +536,14 @@ const Verification: React.FC = () => {
               </Popover>
 
               {/* Crawl New URL */}
-              <Button
+              {/* <Button
                 id="crawl-new-url-button"
                 onClick={() => setCrawlModalOpen(true)}
                 className="w-full sm:w-auto"
               >
                 <Globe className="h-4 w-4 mr-2" />
                 Crawl New URL
-              </Button>
+              </Button> */}
             </div>
           </CardContent>
         </Card>
@@ -566,15 +561,6 @@ const Verification: React.FC = () => {
                 )}
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Button
-                  id="export-judol-button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportJudol}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Data Judol
-                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -602,6 +588,14 @@ const Verification: React.FC = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <Button
+                  id="export-judol-button"
+                  size="sm"
+                  onClick={handleExportJudol}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export Data Judol
+                </Button>
               </div>
             </div>
           </CardHeader>

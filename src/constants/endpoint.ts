@@ -36,6 +36,7 @@ const ENDPOINTS = {
     `${APP_BASE_URL_API}/api/data/domains/${domainId}`,
   UPDATE_DOMAIN_STATUS: (domainId: string) =>
     `${APP_BASE_URL_API}/api/data/domains/${domainId}/status`,
+  EXPORT_JUDOL: `${APP_BASE_URL_API}/api/data/export/judol`,
 
   // ============================================
   // INFERENCE

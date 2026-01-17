@@ -80,9 +80,9 @@ export interface ValidationError {
 // MULTIPLE KEYWORDS SCHEDULE API TYPES
 // ============================================
 
-// Request body for POST /scrape/multiple-keywords-schedule
+// Request body for POST /scrape/multiple-keyword-schedule
 export interface SaveKeywordsScheduleRequest {
-  keywords: string; // Comma-separated string, NOT array
+  keywords: string[]; // Array of keyword strings
   schedule: string; // cron expression
 }
 
@@ -95,9 +95,10 @@ export interface SaveKeywordsScheduleResponse {
   schedule: string;
 }
 
-// Response for GET /scrape/multiple-keywords-schedule
+// Response for GET /scrape/multiple-keyword-schedule
 export interface GetKeywordsScheduleResponse {
   success: boolean;
-  keywords: string; // comma-separated string
-  schedule: string; // cron expression
+  schedule: string; // cron expression e.g., "* */30 * * * *"
+  total: number;
+  data: KeywordItem[]; // Array of keyword objects with id and keyword
 }

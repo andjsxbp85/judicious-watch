@@ -54,11 +54,38 @@ const CRON_OPTIONS = [
   { value: "12h", label: "Setiap 12 jam", cron: "0 */12 * * *" },
 ];
 
-// Helper function to parse cron expression to label
-const parseCronLabel = (cron?: string): string => {
-  if (!cron) return "Tidak ada jadwal";
-  const option = CRON_OPTIONS.find((opt) => opt.cron === cron);
-  return option ? option.label : cron;
+// Helper function to parse cron expression to dropdown value
+// Handles various cron formats from the API
+const getCronValueFromExpression = (cron?: string): string | undefined => {
+  if (!cron) return undefined;
+
+  // First, try exact match
+  const exactMatch = CRON_OPTIONS.find((opt) => opt.cron === cron);
+  if (exactMatch) return exactMatch.value;
+
+  // If no exact match, try to parse the interval from the cron expression
+  // API might return formats like "* */30 * * *" or "*/30 * * * *"
+  const parts = cron.split(" ").filter((p) => p.includes("*/"));
+
+  for (const part of parts) {
+    const intervalMatch = part.match(/\*\/(\d+)/);
+    if (intervalMatch) {
+      const interval = parseInt(intervalMatch[1], 10);
+
+      // Match based on interval value
+      if (interval === 30) return "30m";
+      if (interval === 2) return "2h";
+      if (interval === 3) return "3h";
+      if (interval === 5) return "5h";
+      if (interval === 8) return "8h";
+      if (interval === 12) return "12h";
+    }
+  }
+
+  // Check for hourly pattern (0 * * * *)
+  if (cron === "0 * * * *") return "1h";
+
+  return undefined;
 };
 
 const AdminConsole: React.FC = () => {
@@ -106,15 +133,19 @@ const AdminConsole: React.FC = () => {
   const fetchKeywords = async () => {
     setIsFetchingKeywords(true);
     try {
-      const response = await scrapeService.getKeywords();
+      const response = await scrapeService.getKeywordsSchedule();
       if (response.success && response.data) {
         setKeywords(
           response.data.map((item) => ({
             id: item.id,
             keyword: item.keyword,
-            schedule: item.schedule,
           }))
         );
+        // Set schedule dropdown from API response
+        const cronValue = getCronValueFromExpression(response.schedule);
+        if (cronValue) {
+          setCronSchedule(cronValue);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch keywords:", error);
@@ -307,7 +338,7 @@ const AdminConsole: React.FC = () => {
 
       // Prepare request data
       const requestData: SaveKeywordsScheduleRequest = {
-        keywords: keywords.map((k) => k.keyword).join(", "), // Convert array to comma-separated string
+        keywords: keywords.map((k) => k.keyword), // Send as array
         schedule: selectedCronExpression,
       };
 
@@ -601,14 +632,13 @@ const AdminConsole: React.FC = () => {
                     <TableRow>
                       <TableHead className="w-16 text-center">No</TableHead>
                       <TableHead>Keyword</TableHead>
-                      <TableHead className="w-[150px]">Jadwal Crawl</TableHead>
                       <TableHead className="w-32 text-center">Aksi</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isFetchingKeywords ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-8">
+                        <TableCell colSpan={3} className="text-center py-8">
                           <div className="flex items-center justify-center gap-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Memuat keywords...</span>
@@ -618,7 +648,7 @@ const AdminConsole: React.FC = () => {
                     ) : keywords.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          colSpan={4}
+                          colSpan={3}
                           className="text-center py-8 text-muted-foreground"
                         >
                           Belum ada keyword. Klik "Tambah Keyword" untuk
@@ -649,11 +679,6 @@ const AdminConsole: React.FC = () => {
                             ) : (
                               <span>{keyword.keyword}</span>
                             )}
-                          </TableCell>
-                          <TableCell>
-                            <span className="text-sm text-muted-foreground">
-                              {parseCronLabel(keyword.schedule)}
-                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center justify-center gap-2">
@@ -723,7 +748,7 @@ const AdminConsole: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex justify-end gap-3">
-              <Button
+              {/* <Button
                 onClick={handleStartCrawl}
                 disabled={isCrawling || keywords.length === 0 || isSavingConfig}
                 size="lg"
@@ -739,7 +764,7 @@ const AdminConsole: React.FC = () => {
                     Mulai Crawling
                   </>
                 )}
-              </Button>
+              </Button> */}
 
               <Button
                 onClick={handleSaveConfiguration}
@@ -755,7 +780,7 @@ const AdminConsole: React.FC = () => {
                 ) : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
-                    Simpan Keyword dan Jadwal
+                    Save
                   </>
                 )}
               </Button>

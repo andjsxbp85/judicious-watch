@@ -1,73 +1,124 @@
-# Welcome to your Lovable project
+# Frontend Installation Guide
 
-## Project info
+Dokumentasi ini menjelaskan cara melakukan instalasi dan menjalankan **Frontend (Vite + React)**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+---
 
-## How can I edit this code?
+## 1. Clone Project
 
-There are several ways of editing your application.
+Jalankan perintah berikut di terminal:
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+git clone https://github.com/andjsxbp85/judicious-watch.git
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 2. Masuk ke Folder Project
 
-**Use GitHub Codespaces**
+Setelah proses clone selesai, masuk ke folder project:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+cd judicious-watch
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 3. Install Dependency
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Pastikan **Node.js** sudah terinstall, lalu jalankan:
 
-## How can I deploy this project?
+```bash
+npm install
+```
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 4. Buat File `.env`
 
-Yes, you can!
+Buat file `.env` di root project (sejajar dengan `package.json`), lalu isi seperti berikut:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```env
+VITE_API_URL=
+VITE_APP_NAME=
+VITE_APP_DOMAIN=
+VITE_APP_COOKIE_NAME=auth_token
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+> Pastikan value `VITE_API_URL`, `VITE_APP_NAME`, dan `VITE_APP_DOMAIN` diisi sesuai kebutuhan environment kamu.
+
+---
+
+## 5. Konfigurasi `vite.config.ts`
+
+Pastikan file `vite.config.ts` berisi konfigurasi berikut (proxy API dan alias path):
+
+```ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import { componentTagger } from "lovable-tagger";
+
+// https://vitejs.dev/config/
+export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 443,
+    proxy: {
+      "/api": {
+        target: "http://127.0.0.1:3000",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+  plugins: [react(), mode === "development" && componentTagger()].filter(
+    Boolean,
+  ),
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+}));
+```
+
+---
+
+## 6. Build Frontend
+
+Untuk build project (akan menghasilkan folder `dist`):
+
+```bash
+npm run build
+```
+
+---
+
+## 7. Run Frontend (Preview Mode)
+
+Menjalankan hasil build:
+
+```bash
+npm run preview
+```
+
+---
+
+## Notes
+
+- Pastikan backend sudah berjalan pada:
+
+  ```
+  http://127.0.0.1:3000
+  ```
+
+- Semua request dari frontend ke endpoint:
+
+  ```
+  /api
+  ```
+
+  akan otomatis diteruskan (proxy) ke backend.
+
+---

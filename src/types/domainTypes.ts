@@ -51,6 +51,7 @@ export interface GetDomainsResponse {
 // Request body for PATCH /api/data/domains/{domain_id}/status
 export interface UpdateDomainStatusRequest {
   status: DomainStatus;
+  reasoning_verificator: string;
 }
 
 // API Response for PATCH /api/data/domains/{domain_id}/status
@@ -58,6 +59,7 @@ export interface UpdateDomainStatusResponse {
   success: boolean;
   message: string;
   updated_count: number;
+  reasoning_verificator?: string;
 }
 
 // Frontend Domain type (mapped from API response)
@@ -106,6 +108,7 @@ export interface DomainDetailResponse {
   success: boolean;
   domain_id: string;
   domain_name: string;
+  reasoning_verificator: string | null;
   crawls: CrawlHistoryItem[];
 }
 
@@ -128,6 +131,7 @@ export interface FrontendCrawlItem {
 export interface FrontendDomainDetail {
   domainId: string;
   domainName: string;
+  reasoningVerificator: string | null;
   crawls: FrontendCrawlItem[];
 }
 

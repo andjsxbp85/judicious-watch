@@ -280,13 +280,14 @@ export const domainService = {
    * @returns Promise with frontend-formatted domain detail
    */
   async getDomainDetailForFrontend(
-    domainId: string
+    domainId: string,
   ): Promise<FrontendDomainDetail> {
     const response = await this.getDomainDetail(domainId);
 
     return {
       domainId: response.domain_id,
       domainName: response.domain_name,
+      reasoningVerificator: response.reasoning_verificator,
       crawls: response.crawls.map(mapCrawlToFrontend),
     };
   },
@@ -295,13 +296,18 @@ export const domainService = {
    * Update domain status
    * @param domainId - The domain ID to update
    * @param status - The new status (judol, non_judol, not_verified)
+   * @param reasoningVerificator - Optional reasoning from verificator
    * @returns Promise with update response
    */
   async updateDomainStatus(
     domainId: string,
-    status: DomainStatus
+    status: DomainStatus,
+    reasoningVerificator: string = "",
   ): Promise<UpdateDomainStatusResponse> {
-    const body: UpdateDomainStatusRequest = { status };
+    const body: UpdateDomainStatusRequest = {
+      status,
+      reasoning_verificator: reasoningVerificator,
+    };
     return apiClient(ENDPOINTS.UPDATE_DOMAIN_STATUS(domainId), {
       method: "PATCH",
       body: JSON.stringify(body),
@@ -328,7 +334,7 @@ export const domainService = {
    */
   async sendBulkToLLM(
     domains: string[],
-    onProgress?: (current: number, total: number, domain: string) => void
+    onProgress?: (current: number, total: number, domain: string) => void,
   ): Promise<
     { domain: string; result: SendToLLMResponse | null; error: string | null }[]
   > {
@@ -389,7 +395,7 @@ export const domainService = {
     const csvContent = [
       headers.join(","),
       ...rows.map((row) =>
-        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(",")
+        row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","),
       ),
     ].join("\n");
 
@@ -401,7 +407,7 @@ export const domainService = {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `domains_export_${new Date().toISOString().split("T")[0]}.csv`
+      `domains_export_${new Date().toISOString().split("T")[0]}.csv`,
     );
     link.style.visibility = "hidden";
 

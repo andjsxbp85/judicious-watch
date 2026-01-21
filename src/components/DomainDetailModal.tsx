@@ -52,7 +52,7 @@ interface DomainDetailModalProps {
   onVerify?: (
     domainId: string,
     status: DomainStatus,
-    reasoning?: string
+    reasoning?: string,
   ) => void;
 }
 
@@ -94,7 +94,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 }) => {
   // API data state
   const [domainDetail, setDomainDetail] = useState<FrontendDomainDetail | null>(
-    null
+    null,
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,12 +129,13 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
         setReasoning(firstCrawl.reasoning || "");
       }
       setSelectedCrawlIndex(0);
-      setUserReasoning(""); // Reset user reasoning to empty
+      // Set user reasoning from API response (reasoning_verificator) if available
+      setUserReasoning(detail.reasoningVerificator || "");
       setHasChanges(false);
     } catch (err) {
       console.error("Failed to fetch domain detail:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to fetch domain detail"
+        err instanceof Error ? err.message : "Failed to fetch domain detail",
       );
     } finally {
       setIsLoading(false);
@@ -154,7 +155,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
 
   // Convert frontend status to API status format
   const toApiStatus = (
-    status: DomainStatus
+    status: DomainStatus,
   ): "judol" | "non_judol" | "manual_check" => {
     switch (status) {
       case "judol":
@@ -190,7 +191,8 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
       const apiStatus = toApiStatus(currentStatus);
       const response = await domainService.updateDomainStatus(
         domainId,
-        apiStatus
+        apiStatus,
+        userReasoning,
       );
 
       if (response.success) {
@@ -358,7 +360,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                 >
                   <Badge
                     className={`${getStatusBadgeClass(
-                      currentStatus
+                      currentStatus,
                     )} cursor-pointer hover:opacity-80 flex items-center gap-1`}
                   >
                     {getStatusLabel(currentStatus)}
@@ -521,7 +523,7 @@ const DomainDetailModal: React.FC<DomainDetailModalProps> = ({
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                      }
+                      },
                     )}
                   </div>
                 </div>

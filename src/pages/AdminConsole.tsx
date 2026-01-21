@@ -96,7 +96,7 @@ const AdminConsole: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [editSchedule, setEditSchedule] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -120,10 +120,10 @@ const AdminConsole: React.FC = () => {
   const [isFetchingKeywords, setIsFetchingKeywords] = useState(false);
   const [isSavingKeyword, setIsSavingKeyword] = useState(false);
   const [deletingKeywordId, setDeletingKeywordId] = useState<string | null>(
-    null
+    null,
   );
   const [isSavingConfig, setIsSavingConfig] = useState(false);
-  const [isCrawling, setIsCrawling] = useState(false);
+  // const [isCrawling, setIsCrawling] = useState(false);
 
   // Fetch keywords on component mount
   useEffect(() => {
@@ -139,12 +139,16 @@ const AdminConsole: React.FC = () => {
           response.data.map((item) => ({
             id: item.id,
             keyword: item.keyword,
-          }))
+          })),
         );
         // Set schedule dropdown from API response
         const cronValue = getCronValueFromExpression(response.schedule);
         if (cronValue) {
           setCronSchedule(cronValue);
+        }
+        // Set crawl engine from API response
+        if (response.crawl_engine) {
+          setSearchEngine(response.crawl_engine);
         }
       }
     } catch (error) {
@@ -218,7 +222,7 @@ const AdminConsole: React.FC = () => {
     try {
       // Get current cron expression from global schedule selector
       const selectedCron = CRON_OPTIONS.find(
-        (opt) => opt.value === cronSchedule
+        (opt) => opt.value === cronSchedule,
       )?.cron;
 
       await scrapeService.updateKeyword(editingId, {
@@ -329,7 +333,7 @@ const AdminConsole: React.FC = () => {
     try {
       // Get the cron expression for the current schedule
       const selectedCronExpression = CRON_OPTIONS.find(
-        (opt) => opt.value === cronSchedule
+        (opt) => opt.value === cronSchedule,
       )?.cron;
 
       if (!selectedCronExpression) {
@@ -340,6 +344,7 @@ const AdminConsole: React.FC = () => {
       const requestData: SaveKeywordsScheduleRequest = {
         keywords: keywords.map((k) => k.keyword), // Send as array
         schedule: selectedCronExpression,
+        crawl_engine: searchEngine, // Include selected search engine
       };
 
       // Call the API
@@ -371,59 +376,59 @@ const AdminConsole: React.FC = () => {
     }
   };
 
-  const handleStartCrawl = async () => {
-    if (keywords.length === 0) {
-      toast({
-        title: "Error",
-        description: "Tambahkan minimal satu keyword sebelum memulai crawl",
-        variant: "destructive",
-      });
-      return;
-    }
+  // const handleStartCrawl = async () => {
+  //   if (keywords.length === 0) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Tambahkan minimal satu keyword sebelum memulai crawl",
+  //       variant: "destructive",
+  //     });
+  //     return;
+  //   }
 
-    setIsCrawling(true);
-    try {
-      const keywordStrings = keywords.map((k) => k.keyword);
-      const result = await scrapeService.scrapeMultiKeyword({
-        keywords: keywordStrings,
-        crawl_engine: searchEngine,
-        ai_reasoning: true,
-        tld_whitelist: tldList.join("; "),
-      });
+  //   setIsCrawling(true);
+  //   try {
+  //     const keywordStrings = keywords.map((k) => k.keyword);
+  //     const result = await scrapeService.scrapeMultiKeyword({
+  //       keywords: keywordStrings,
+  //       crawl_engine: searchEngine,
+  //       ai_reasoning: true,
+  //       tld_whitelist: tldList.join("; "),
+  //     });
 
-      const totalInferenceTriggered =
-        result.results?.reduce((acc: number, r: any) => {
-          const inferenceCount =
-            typeof r.inference_triggered === "number"
-              ? r.inference_triggered
-              : 0;
-          return acc + inferenceCount;
-        }, 0) || 0;
+  //     const totalInferenceTriggered =
+  //       result.results?.reduce((acc: number, r: any) => {
+  //         const inferenceCount =
+  //           typeof r.inference_triggered === "number"
+  //             ? r.inference_triggered
+  //             : 0;
+  //         return acc + inferenceCount;
+  //       }, 0) || 0;
 
-      const totalSaved =
-        result.results?.reduce(
-          (acc: number, r: any) => acc + (r.total_saved || 0),
-          0
-        ) || 0;
+  //     const totalSaved =
+  //       result.results?.reduce(
+  //         (acc: number, r: any) => acc + (r.total_saved || 0),
+  //         0,
+  //       ) || 0;
 
-      toast({
-        title: "Crawl & Inference Berhasil",
-        description: `${keywords.length} keyword berhasil di-crawl menggunakan ${searchEngine}. Total ${totalSaved} data tersimpan dan ${totalInferenceTriggered} inference berhasil dijalankan.`,
-      });
-    } catch (error) {
-      console.error("Crawl error:", error);
-      toast({
-        title: "Crawl Gagal",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Terjadi kesalahan saat melakukan crawl",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCrawling(false);
-    }
-  };
+  //     toast({
+  //       title: "Crawl & Inference Berhasil",
+  //       description: `${keywords.length} keyword berhasil di-crawl menggunakan ${searchEngine}. Total ${totalSaved} data tersimpan dan ${totalInferenceTriggered} inference berhasil dijalankan.`,
+  //     });
+  //   } catch (error) {
+  //     console.error("Crawl error:", error);
+  //     toast({
+  //       title: "Crawl Gagal",
+  //       description:
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Terjadi kesalahan saat melakukan crawl",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsCrawling(false);
+  //   }
+  // };
 
   return (
     <Layout>
@@ -768,7 +773,7 @@ const AdminConsole: React.FC = () => {
 
               <Button
                 onClick={handleSaveConfiguration}
-                disabled={isSavingConfig || keywords.length === 0 || isCrawling}
+                disabled={isSavingConfig || keywords.length === 0}
                 size="lg"
                 variant="default"
               >

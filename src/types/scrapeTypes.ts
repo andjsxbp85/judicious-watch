@@ -84,6 +84,7 @@ export interface ValidationError {
 export interface SaveKeywordsScheduleRequest {
   keywords: string[]; // Array of keyword strings
   schedule: string; // cron expression
+  crawl_engine: CrawlEngine; // Search engine to use
 }
 
 // Response for POST /scrape/multiple-keywords-schedule
@@ -99,6 +100,7 @@ export interface SaveKeywordsScheduleResponse {
 export interface GetKeywordsScheduleResponse {
   success: boolean;
   schedule: string; // cron expression e.g., "* */30 * * * *"
+  crawl_engine?: CrawlEngine; // Search engine saved
   total: number;
   data: KeywordItem[]; // Array of keyword objects with id and keyword
 }

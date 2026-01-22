@@ -15,7 +15,7 @@ const ENDPOINTS = {
   // SCRAPING & CRAWLING
   // ============================================
   SCRAPE_MULTI_KEYWORD: `${APP_BASE_URL_API}/scrape/multi-keyword`,
-  GET_KEYWORDS: `${APP_BASE_URL_API}/scrape/keywordss`,
+  // GET_KEYWORDS: `${APP_BASE_URL_API}/scrape/keywordss`,
   CREATE_KEYWORD: `${APP_BASE_URL_API}/scrape/keywords`,
   UPDATE_KEYWORD: (keywordId: string) =>
     `${APP_BASE_URL_API}/scrape/keywords/${keywordId}`,

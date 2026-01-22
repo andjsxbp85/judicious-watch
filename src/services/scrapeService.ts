@@ -56,11 +56,11 @@ export const scrapeService = {
    * Get all keywords from database
    * @returns Promise with the list of keywords
    */
-  async getKeywords(): Promise<GetKeywordsResponse> {
-    return apiClient(ENDPOINTS.GET_KEYWORDS, {
-      method: "GET",
-    });
-  },
+  // async getKeywords(): Promise<GetKeywordsResponse> {
+  //   return apiClient(ENDPOINTS.GET_KEYWORDS, {
+  //     method: "GET",
+  //   });
+  // },
 
   /**
    * Create a new keyword

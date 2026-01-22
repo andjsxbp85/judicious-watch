@@ -136,9 +136,15 @@ const AdminConsole: React.FC = () => {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   // const [isCrawling, setIsCrawling] = useState(false);
 
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  // Pagination states - Load from localStorage if available
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = localStorage.getItem("adminConsole_currentPage");
+    return saved ? parseInt(saved, 10) : 1;
+  });
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    const saved = localStorage.getItem("adminConsole_itemsPerPage");
+    return saved ? parseInt(saved, 10) : 10;
+  });
   const [totalKeywords, setTotalKeywords] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
 
@@ -160,6 +166,15 @@ const AdminConsole: React.FC = () => {
     }
   }, [currentPage]);
 
+  // Save pagination state to localStorage
+  useEffect(() => {
+    localStorage.setItem("adminConsole_currentPage", currentPage.toString());
+  }, [currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem("adminConsole_itemsPerPage", itemsPerPage.toString());
+  }, [itemsPerPage]);
+
   const fetchKeywords = async () => {
     setIsFetchingKeywords(true);
     try {
@@ -177,6 +192,12 @@ const AdminConsole: React.FC = () => {
         // Set pagination info
         setTotalKeywords(response.total || 0);
         setTotalPages(response.total_pages || 0);
+
+        // Validate currentPage doesn't exceed totalPages after data load
+        if (response.total_pages && currentPage > response.total_pages) {
+          setCurrentPage(1);
+        }
+
         // Set schedule dropdown from API response
         const cronValue = getCronValueFromExpression(response.schedule);
         if (cronValue) {

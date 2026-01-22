@@ -15,7 +15,7 @@ const ENDPOINTS = {
   // SCRAPING & CRAWLING
   // ============================================
   SCRAPE_MULTI_KEYWORD: `${APP_BASE_URL_API}/scrape/multi-keyword`,
-  GET_KEYWORDS: `${APP_BASE_URL_API}/scrape/keywords`,
+  GET_KEYWORDS: `${APP_BASE_URL_API}/scrape/keywordss`,
   CREATE_KEYWORD: `${APP_BASE_URL_API}/scrape/keywords`,
   UPDATE_KEYWORD: (keywordId: string) =>
     `${APP_BASE_URL_API}/scrape/keywords/${keywordId}`,
@@ -24,7 +24,7 @@ const ENDPOINTS = {
   GET_SCRAPED_DATA: `${APP_BASE_URL_API}/scrape/multi-keyword`,
 
   // Keywords Schedule Management
-  GET_KEYWORDS_SCHEDULE: `${APP_BASE_URL_API}/scrape/multiple-keyword-schedule`,
+  GET_KEYWORDS_SCHEDULE: `${APP_BASE_URL_API}/scrape/keywords`,
   SAVE_KEYWORDS_SCHEDULE: `${APP_BASE_URL_API}/scrape/multiple-keyword-schedule
 `,
 

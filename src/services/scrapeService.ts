@@ -44,7 +44,7 @@ export const scrapeService = {
    * @returns Promise with the scrape results
    */
   async scrapeMultiKeyword(
-    request: ScrapeMultiKeywordRequest
+    request: ScrapeMultiKeywordRequest,
   ): Promise<ScrapeMultiKeywordResponse> {
     return apiClient(ENDPOINTS.SCRAPE_MULTI_KEYWORD, {
       method: "POST",
@@ -68,7 +68,7 @@ export const scrapeService = {
    * @returns Promise with the created keyword
    */
   async createKeyword(
-    request: CreateKeywordRequest
+    request: CreateKeywordRequest,
   ): Promise<CreateKeywordResponse> {
     return apiClient(ENDPOINTS.CREATE_KEYWORD, {
       method: "POST",
@@ -84,7 +84,7 @@ export const scrapeService = {
    */
   async updateKeyword(
     keywordId: string,
-    request: UpdateKeywordRequest
+    request: UpdateKeywordRequest,
   ): Promise<UpdateKeywordResponse> {
     return apiClient(ENDPOINTS.UPDATE_KEYWORD(keywordId), {
       method: "PUT",
@@ -109,7 +109,7 @@ export const scrapeService = {
    * @returns Promise with save confirmation
    */
   async saveKeywordsSchedule(
-    request: SaveKeywordsScheduleRequest
+    request: SaveKeywordsScheduleRequest,
   ): Promise<SaveKeywordsScheduleResponse> {
     return apiClient(ENDPOINTS.SAVE_KEYWORDS_SCHEDULE, {
       method: "POST",
@@ -119,11 +119,19 @@ export const scrapeService = {
 
   /**
    * Get all keywords and their schedule
+   * @param page - Page number (default: 1)
+   * @param limit - Items per page (default: 10)
    * @returns Promise with keywords and schedule
    */
-  async getKeywordsSchedule(): Promise<GetKeywordsScheduleResponse> {
-    return apiClient(ENDPOINTS.GET_KEYWORDS_SCHEDULE, {
-      method: "GET",
-    });
+  async getKeywordsSchedule(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<GetKeywordsScheduleResponse> {
+    return apiClient(
+      `${ENDPOINTS.GET_KEYWORDS_SCHEDULE}?page=${page}&limit=${limit}`,
+      {
+        method: "GET",
+      },
+    );
   },
 };

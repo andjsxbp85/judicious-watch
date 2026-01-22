@@ -102,5 +102,8 @@ export interface GetKeywordsScheduleResponse {
   schedule: string; // cron expression e.g., "* */30 * * * *"
   crawl_engine?: CrawlEngine; // Search engine saved
   total: number;
+  page: number; // Current page
+  limit: number; // Items per page
+  total_pages: number; // Total number of pages
   data: KeywordItem[]; // Array of keyword objects with id and keyword
 }

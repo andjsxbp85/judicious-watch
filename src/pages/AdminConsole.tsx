@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/table";
 import { Label } from "@/components/ui/label";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
   Save,
   Play,
   X,
@@ -29,6 +35,8 @@ import {
   Plus,
   Pencil,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { scrapeService } from "@/services/scrapeService";
@@ -100,7 +108,10 @@ const AdminConsole: React.FC = () => {
   );
   const [newKeyword, setNewKeyword] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const [searchEngine, setSearchEngine] = useState<CrawlEngine>("google");
+  const [selectedEngines, setSelectedEngines] = useState<CrawlEngine[]>([
+    "google",
+    "baidu",
+  ]); // Multi-select engines (default: google & baidu)
   const [cronSchedule, setCronSchedule] = useState<string>("1m");
 
   const DEFAULT_TLDS = [
@@ -125,15 +136,37 @@ const AdminConsole: React.FC = () => {
   const [isSavingConfig, setIsSavingConfig] = useState(false);
   // const [isCrawling, setIsCrawling] = useState(false);
 
-  // Fetch keywords on component mount
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalKeywords, setTotalKeywords] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Ref for keyword table scroll
+  const keywordTableRef = useRef<HTMLDivElement>(null);
+
+  // Fetch keywords on component mount and when pagination changes
   useEffect(() => {
     fetchKeywords();
-  }, []);
+  }, [currentPage, itemsPerPage]);
+
+  // Scroll to top of keyword table when page changes
+  useEffect(() => {
+    if (keywordTableRef.current && currentPage > 1) {
+      keywordTableRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [currentPage]);
 
   const fetchKeywords = async () => {
     setIsFetchingKeywords(true);
     try {
-      const response = await scrapeService.getKeywordsSchedule();
+      const response = await scrapeService.getKeywordsSchedule(
+        currentPage,
+        itemsPerPage,
+      );
       if (response.success && response.data) {
         setKeywords(
           response.data.map((item) => ({
@@ -141,6 +174,9 @@ const AdminConsole: React.FC = () => {
             keyword: item.keyword,
           })),
         );
+        // Set pagination info
+        setTotalKeywords(response.total || 0);
+        setTotalPages(response.total_pages || 0);
         // Set schedule dropdown from API response
         const cronValue = getCronValueFromExpression(response.schedule);
         if (cronValue) {
@@ -148,7 +184,9 @@ const AdminConsole: React.FC = () => {
         }
         // Set crawl engine from API response
         if (response.crawl_engine) {
-          setSearchEngine(response.crawl_engine);
+          // For now, backend only returns single engine, but we display as multi-select
+          // Default to show both Google and Baidu as checked
+          setSelectedEngines(["google", "baidu"]);
         }
       }
     } catch (error) {
@@ -269,6 +307,13 @@ const AdminConsole: React.FC = () => {
 
       // Refresh keywords from database
       await fetchKeywords();
+
+      // If current page is empty after deletion, go to previous page
+      const remainingItems = totalKeywords - 1;
+      const maxPage = Math.ceil(remainingItems / itemsPerPage);
+      if (currentPage > maxPage && maxPage > 0) {
+        setCurrentPage(maxPage);
+      }
     } catch (error) {
       console.error("Failed to delete keyword:", error);
       toast({
@@ -344,7 +389,7 @@ const AdminConsole: React.FC = () => {
       const requestData: SaveKeywordsScheduleRequest = {
         keywords: keywords.map((k) => k.keyword), // Send as array
         schedule: selectedCronExpression,
-        crawl_engine: searchEngine, // Include selected search engine
+        crawl_engine: "google", // Always send Google for now (backend only supports Google)
       };
 
       // Call the API
@@ -358,7 +403,8 @@ const AdminConsole: React.FC = () => {
           } berhasil disimpan.`,
         });
 
-        // Refresh the keywords list to get updated data
+        // Reset to first page and refresh the keywords list to get updated data
+        setCurrentPage(1);
         await fetchKeywords();
       }
     } catch (error) {
@@ -442,19 +488,67 @@ const AdminConsole: React.FC = () => {
             {/* Search Engine Selection */}
             <div className="space-y-3">
               <Label className="text-sm font-medium">Search Engine</Label>
-              <Select
-                value={searchEngine}
-                onValueChange={(value) => setSearchEngine(value as CrawlEngine)}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Pilih Search Engine" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="google">Google</SelectItem>
-                  <SelectItem value="baidu">Baidu</SelectItem>
-                  <SelectItem value="bing">Bing</SelectItem>
-                </SelectContent>
-              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-between font-normal"
+                  >
+                    <span>
+                      {selectedEngines.length === 0
+                        ? "Pilih Search Engine"
+                        : selectedEngines
+                            .map(
+                              (engine) =>
+                                engine.charAt(0).toUpperCase() +
+                                engine.slice(1),
+                            )
+                            .join(", ")}
+                    </span>
+                    <ChevronRight className="h-4 w-4 ml-2 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-4" align="start">
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      {["google", "baidu", "bing"].map((engine) => (
+                        <div
+                          key={engine}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`engine-${engine}`}
+                            checked={selectedEngines.includes(
+                              engine as CrawlEngine,
+                            )}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedEngines([
+                                  ...selectedEngines,
+                                  engine as CrawlEngine,
+                                ]);
+                              } else {
+                                setSelectedEngines(
+                                  selectedEngines.filter((e) => e !== engine),
+                                );
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor={`engine-${engine}`}
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                          >
+                            {engine.charAt(0).toUpperCase() + engine.slice(1)}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Note: Saat ini hanya Google yang digunakan untuk crawling
+                    </p>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
             {/* TLD Whitelist Section */}
@@ -584,10 +678,10 @@ const AdminConsole: React.FC = () => {
             </div>
 
             {/* Keyword Table */}
-            <div className="space-y-3">
+            <div ref={keywordTableRef} className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium">
-                  Daftar Keyword ({keywords.length})
+                  Daftar Keyword ({totalKeywords})
                 </Label>
                 {!isAdding && (
                   <Button
@@ -631,7 +725,7 @@ const AdminConsole: React.FC = () => {
                 </div>
               )}
 
-              <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+              <div className="border rounded-lg">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -667,7 +761,7 @@ const AdminConsole: React.FC = () => {
                           className="hover:bg-muted/30"
                         >
                           <TableCell className="text-center font-medium">
-                            {index + 1}
+                            {(currentPage - 1) * itemsPerPage + index + 1}
                           </TableCell>
                           <TableCell>
                             {editingId === keyword.id ? (
@@ -749,6 +843,106 @@ const AdminConsole: React.FC = () => {
                   </TableBody>
                 </Table>
               </div>
+
+              {/* Pagination */}
+              {totalKeywords > 0 && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-t border-border">
+                  <div className="flex items-center gap-4">
+                    <p className="text-sm text-muted-foreground">
+                      Menampilkan {(currentPage - 1) * itemsPerPage + 1} -{" "}
+                      {Math.min(currentPage * itemsPerPage, totalKeywords)} dari{" "}
+                      {totalKeywords} keyword
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Label
+                        htmlFor="items-per-page-keywords"
+                        className="text-sm text-muted-foreground whitespace-nowrap"
+                      >
+                        Per halaman:
+                      </Label>
+                      <Select
+                        value={itemsPerPage.toString()}
+                        onValueChange={(value) => {
+                          setItemsPerPage(Number(value));
+                          setCurrentPage(1); // Reset to first page
+                        }}
+                      >
+                        <SelectTrigger
+                          id="items-per-page-keywords"
+                          className="w-[70px] h-8"
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="25">25</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage(Math.max(1, currentPage - 1))
+                        }
+                        disabled={currentPage === 1 || isFetchingKeywords}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <div className="flex items-center gap-1">
+                        {Array.from(
+                          { length: Math.min(totalPages, 5) },
+                          (_, i) => {
+                            // Show pages around current page
+                            let page: number;
+                            if (totalPages <= 5) {
+                              page = i + 1;
+                            } else if (currentPage <= 3) {
+                              page = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                              page = totalPages - 4 + i;
+                            } else {
+                              page = currentPage - 2 + i;
+                            }
+                            return (
+                              <Button
+                                key={page}
+                                variant={
+                                  currentPage === page ? "default" : "outline"
+                                }
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                disabled={isFetchingKeywords}
+                                className="h-8 w-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            );
+                          },
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setCurrentPage(Math.min(totalPages, currentPage + 1))
+                        }
+                        disabled={
+                          currentPage === totalPages || isFetchingKeywords
+                        }
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
